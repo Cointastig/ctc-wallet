@@ -1,4 +1,6 @@
 {
   "version": 2,
-  "name": "ctc-wallet"
+  "name": "ctc-wallet",
+  "cleanUrls": true,
+  "trailingSlash": false
 }
