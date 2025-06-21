@@ -1,0 +1,446 @@
+/* styles/accounts.css - Account Management Styles */
+
+/* Account List Styles */
+.account-item {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.account-item:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.2);
+    transform: translateY(-1px);
+}
+
+.account-item.active {
+    background: rgba(107, 158, 255, 0.15);
+    border-color: rgba(107, 158, 255, 0.4);
+}
+
+.account-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(45deg, #6B9EFF, #FF6B9D);
+    border-radius: 2px 0 0 2px;
+}
+
+.account-icon {
+    margin-right: 16px;
+    flex-shrink: 0;
+}
+
+.account-info {
+    flex: 1;
+    min-width: 0; /* Prevent overflow */
+}
+
+.account-name {
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.account-balance {
+    color: #4ECDC4;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+}
+
+.account-address {
+    color: rgba(255,255,255,0.6);
+    font-size: 12px;
+    margin: 0;
+    font-family: monospace;
+}
+
+.account-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.account-status-active {
+    color: #4CAF50;
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(76, 175, 80, 0.2);
+    padding: 4px 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+/* Icon Grid Styles */
+.icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.icon-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 16px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.icon-option:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(107, 158, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+.icon-option:active {
+    transform: translateY(0);
+}
+
+.icon-name {
+    color: rgba(255,255,255,0.8);
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+/* Context Menu Styles */
+.context-menu {
+    background: rgba(42, 42, 42, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    min-width: 180px;
+    animation: contextMenuShow 0.2s ease-out;
+}
+
+@keyframes contextMenuShow {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.context-menu-item {
+    width: 100%;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 14px;
+    padding: 12px 16px;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.context-menu-item:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.context-menu-item.text-danger {
+    color: #ff6b6b;
+}
+
+.context-menu-item.text-danger:hover {
+    background: rgba(255, 107, 107, 0.1);
+}
+
+/* Account Selector Header */
+.account-selector-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.current-account-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: all 0.3s ease;
+}
+
+.current-account-display:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.2);
+}
+
+.current-account-info h3 {
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 2px 0;
+}
+
+.current-account-info p {
+    color: rgba(255,255,255,0.6);
+    font-size: 12px;
+    margin: 0;
+}
+
+.account-dropdown-arrow {
+    color: rgba(255,255,255,0.6);
+    font-size: 12px;
+    transition: transform 0.3s ease;
+}
+
+.current-account-display:hover .account-dropdown-arrow {
+    transform: translateX(2px);
+}
+
+/* Account Creation Form */
+.account-creation-form {
+    padding: 20px;
+}
+
+.icon-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.icon-preview-container {
+    margin-bottom: 16px;
+}
+
+.icon-selector-button {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.icon-selector-button:hover {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(107, 158, 255, 0.5);
+}
+
+/* Portfolio Summary Card */
+.portfolio-summary {
+    background: linear-gradient(135deg, rgba(107, 158, 255, 0.1), rgba(255, 107, 157, 0.1));
+    border: 1px solid rgba(107, 158, 255, 0.2);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.portfolio-summary h3 {
+    color: #6B9EFF;
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+.portfolio-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.portfolio-stat:last-child {
+    margin-bottom: 0;
+}
+
+.portfolio-stat-label {
+    color: rgba(255,255,255,0.6);
+    font-size: 14px;
+}
+
+.portfolio-stat-value {
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.portfolio-stat-value.primary {
+    color: #4ECDC4;
+}
+
+/* Import Account Styles */
+.import-warning {
+    background: rgba(255, 152, 0, 0.1);
+    border: 1px solid rgba(255, 152, 0, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.import-warning h3 {
+    color: #ff9800;
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+.import-warning p {
+    color: rgba(255,255,255,0.8);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.import-warning a {
+    color: #6B9EFF;
+    text-decoration: none;
+}
+
+.import-warning a:hover {
+    text-decoration: underline;
+}
+
+.private-key-input {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #00D4FF;
+}
+
+.private-key-input::placeholder {
+    color: rgba(255,255,255,0.4);
+    font-style: italic;
+}
+
+/* QR Scanner Overlay */
+.qr-scanner-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.qr-scanner-frame {
+    width: 280px;
+    height: 280px;
+    border: 2px solid white;
+    border-radius: 16px;
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.qr-scanner-corner {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border: 3px solid #6B9EFF;
+}
+
+.qr-scanner-corner.top-left {
+    top: -3px;
+    left: -3px;
+    border-right: none;
+    border-bottom: none;
+}
+
+.qr-scanner-corner.top-right {
+    top: -3px;
+    right: -3px;
+    border-left: none;
+    border-bottom: none;
+}
+
+.qr-scanner-corner.bottom-left {
+    bottom: -3px;
+    left: -3px;
+    border-right: none;
+    border-top: none;
+}
+
+.qr-scanner-corner.bottom-right {
+    bottom: -3px;
+    right: -3px;
+    border-left: none;
+    border-top: none;
+}
+
+.qr-scanner-text {
+    color: white;
+    text-align: center;
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+.qr-scanner-cancel {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .icon-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+    
+    .account-item {
+        padding: 12px;
+    }
+    
+    .account-name {
+        font-size: 14px;
+    }
+    
+    .account-balance {
+        font-size: 13px;
+    }
+    
+    .account-address {
+        font-size: 11px;
+    }
+    
+    .context-menu {
+        min-width: 160px;
+    }
+}
