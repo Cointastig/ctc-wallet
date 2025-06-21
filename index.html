@@ -2,59 +2,18 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CTC Wallet</title>
-    
-    <!-- PWA Meta Tags -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#1a1a1a">
-    <link rel="manifest" href="/public/manifest.json">
-    
-    <!-- SEO Meta Tags -->
-    <meta name="description" content="Secure multi-account CTC cryptocurrency wallet">
-    <meta name="keywords" content="cryptocurrency, wallet, ctc, blockchain, telegram">
-    <meta name="author" content="CTC Team">
-    
-    <!-- Open Graph -->
-    <meta property="og:title" content="CTC Wallet">
-    <meta property="og:description" content="Secure multi-account CTC cryptocurrency wallet">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="/public/icons/icon-512x512.png">
-    
-    <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
     
-    <!-- External Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js" 
-            integrity="sha512-FQqochuxaiWv2gUl8bfhns6E7cm4yd8LhAZI5yIb5SrtVUc3I/WdCLKqkR20TJ9CHbMVPLvMhAD2gDMQVGFGVg==" 
-            crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js" 
-            integrity="sha512-dxLEqelbOL1BKw7Tc6MbjKT8ZmwuZu5FTLUq2h5j2CLu1FXZ4MuX3ZlKP9DkAHh4r32VnhGNfHI30CbjnTnLjA==" 
-            crossorigin="anonymous"></script>
-    
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="/styles/main.css">
-    <link rel="stylesheet" href="/styles/components.css">
-    <link rel="stylesheet" href="/styles/wallet.css">
-    <link rel="stylesheet" href="/styles/accounts.css">
-    
-    <!-- Preload critical resources -->
-    <link rel="preload" href="/js/crypto/wallet.js" as="script">
-    <link rel="preload" href="/js/app.js" as="script">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/wallet.css">
+    <link rel="stylesheet" href="styles/accounts.css">
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div id="loading-screen" class="loading-screen">
-        <div class="loading-content">
-            <div class="icon" style="background: linear-gradient(45deg, #6B9EFF, #FF6B9D);">💼</div>
-            <h2>CTC Wallet</h2>
-            <div class="loading-spinner"></div>
-            <p>Loading secure wallet...</p>
-        </div>
-    </div>
-
-    <!-- App Container -->
     <div class="floating-dots">
         <div class="dot"></div>
         <div class="dot"></div>
@@ -62,68 +21,23 @@
         <div class="dot"></div>
     </div>
 
-    <div class="container" id="app-container" style="display: none;">
+    <div class="container" id="app-container">
         <!-- App content will be loaded here -->
     </div>
 
-    <!-- Service Worker Registration -->
-    <script>
-        // Register Service Worker for PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => {
-                        console.log('SW registered: ', registration);
-                    })
-                    .catch(registrationError => {
-                        console.log('SW registration failed: ', registrationError);
-                    });
-            });
-        }
-    </script>
-
-    <!-- JavaScript Files -->
-    <script src="/js/crypto/wallet.js"></script>
-    <script src="/js/utils/helpers.js"></script>
-    <script src="/js/utils/secure-password-manager.js"></script>
-    <script src="/js/utils/api.js"></script>
-    <script src="/js/utils/qr-utils.js"></script>
-    <script src="/js/utils/secure-storage.js"></script>
-    <script src="/js/utils/accountManager.js"></script>
-    <script src="/js/screens/welcome-updated.js"></script>
-    <script src="/js/screens/wallet-updated.js"></script>
-    <script src="/js/screens/accountSelector.js"></script>
-    <script src="/js/screens/send-fixed.js"></script>
-    <script src="/js/screens/receive-fixed.js"></script>
-    <script src="/js/app.js"></script>
-    
-    <!-- App Initialization -->
-    <script>
-        // Hide loading screen when app is ready
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                document.getElementById('loading-screen').style.display = 'none';
-                document.getElementById('app-container').style.display = 'block';
-            }, 1000);
-        });
-        
-        // Telegram Web App Integration
-        if (window.Telegram && window.Telegram.WebApp) {
-            const tg = window.Telegram.WebApp;
-            tg.ready();
-            tg.expand();
-            
-            // Configure for Telegram
-            document.body.classList.add('telegram-web-app');
-            document.body.style.backgroundColor = tg.backgroundColor || '#1a1a1a';
-            
-            // Handle viewport
-            tg.onEvent('viewportChanged', () => {
-                document.documentElement.style.setProperty('--tg-viewport-height', tg.viewportHeight + 'px');
-            });
-            
-            console.log('✅ Telegram Web App initialized');
-        }
-    </script>
+    <!-- JavaScript Files - Load in correct order -->
+    <script src="js/crypto/wallet.js"></script>
+    <script src="js/utils/helpers.js"></script>
+    <script src="js/utils/secure-password-manager.js"></script>
+    <script src="js/utils/api.js"></script>
+    <script src="js/utils/qr-utils.js"></script>
+    <script src="js/utils/secure-storage.js"></script>
+    <script src="js/utils/accountManager.js"></script>
+    <script src="js/screens/welcome-updated.js"></script>
+    <script src="js/screens/wallet-updated.js"></script>
+    <script src="js/screens/accountSelector.js"></script>
+    <script src="js/screens/send-fixed.js"></script>
+    <script src="js/screens/receive-fixed.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
