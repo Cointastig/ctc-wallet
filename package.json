@@ -1,0 +1,17 @@
+{
+  "name": "ctc-wallet",
+  "version": "1.0.0",
+  "description": "CTC Cryptocurrency Wallet Web App",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Static site - no build needed'",
+    "deploy": "vercel --prod"
+  },
+  "keywords": ["cryptocurrency", "wallet", "ctc", "telegram"],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  }
+}
