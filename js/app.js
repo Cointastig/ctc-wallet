@@ -1,44 +1,59 @@
-// js/app.js - Fixed Main Application Controller
+// js/app.js - Mobile-optimierte CTC Wallet Hauptanwendung
 
 class CTCWalletApp {
     constructor() {
         this.initialized = false;
-        this.currentScreen = null;
-        this.wallet = null;
+        this.currentWallet = null;
+        this.currentAccount = null;
+        this.api = null;
+        this.sessionTimer = null;
+        this.networkStatus = 'unknown';
+        this.isTelegramWebApp = false;
+        
+        // Mobile-spezifische Eigenschaften
+        this.isStandalone = false;
+        this.deviceType = 'unknown';
+        this.orientation = 'portrait';
+        
+        // Sicherheits-Features
+        this.sessionTimeout = 15 * 60 * 1000; // 15 Minuten
+        this.maxInactivity = 5 * 60 * 1000;   // 5 Minuten
+        this.lastActivity = Date.now();
+        
+        // Event-Listener für Aktivitäts-Tracking
+        this.setupActivityTracking();
     }
 
-    // Initialize the application
+    // Hauptinitialisierung
     async init() {
         if (this.initialized) return;
 
         try {
             console.log('🚀 Initializing CTC Wallet App...');
             
-            // Initialize Telegram WebApp if available
-            this.initTelegramWebApp();
+            // Mobile-Erkennung
+            this.detectMobileEnvironment();
             
-            // Wait for all components to be loaded
+            // Telegram WebApp-Integration
+            await this.initTelegramWebApp();
+            
+            // Sicherheits-Setup
+            this.setupSecurityFeatures();
+            
+            // API initialisieren
+            this.api = ApiUtils.init();
+            
+            // Komponenten laden
             await this.waitForComponents();
             
-            // Check for existing wallet
-            const hasExistingWallet = this.checkExistingWallet();
+            // UI initialisieren
+            await this.initializeUI();
             
-            if (!hasExistingWallet) {
-                // Show welcome screen for new users
-                if (window.welcomeScreen) {
-                    window.welcomeScreen.showWelcome();
-                } else {
-                    console.error('welcomeScreen not available');
-                    this.showError('Failed to load welcome screen');
-                    return;
-                }
-            }
-            
-            // Set up global error handlers
-            this.setupErrorHandlers();
-            
-            // Set up network monitoring
+            // Netzwerk-Monitoring
             this.setupNetworkMonitoring();
+            
+            // Auto-Lock Timer starten
+            this.startSessionTimer();
             
             this.initialized = true;
             console.log('✅ CTC Wallet App initialized successfully');
@@ -49,430 +64,618 @@ class CTCWalletApp {
         }
     }
 
-    // Wait for all components to be loaded
-    async waitForComponents() {
-        const maxWaitTime = 5000; // 5 seconds
-        const checkInterval = 100; // 100ms
-        let waited = 0;
+    // Mobile-Umgebung erkennen
+    detectMobileEnvironment() {
+        // Device-Typ erkennen
+        const userAgent = navigator.userAgent;
+        if (/iPhone|iPad|iPod/.test(userAgent)) {
+            this.deviceType = 'ios';
+        } else if (/Android/.test(userAgent)) {
+            this.deviceType = 'android';
+        } else {
+            this.deviceType = 'desktop';
+        }
         
-        while (waited < maxWaitTime) {
-            if (window.welcomeScreen && 
-                window.accountManager && 
-                window.accountIconManager &&
-                window.walletScreen &&
-                window.ctcApi) {
+        // Standalone-Modus (PWA)
+        this.isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                           window.navigator.standalone ||
+                           document.referrer.includes('android-app://');
+        
+        // Orientierung
+        this.orientation = window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';
+        
+        // Mobile-CSS aktivieren
+        document.body.classList.add(`device-${this.deviceType}`);
+        if (this.isStandalone) {
+            document.body.classList.add('standalone');
+        }
+        
+        console.log(`📱 Device: ${this.deviceType}, Standalone: ${this.isStandalone}`);
+    }
+
+    // Telegram WebApp-Integration
+    async initTelegramWebApp() {
+        if (typeof window.Telegram !== 'undefined' && window.Telegram.WebApp) {
+            this.isTelegramWebApp = true;
+            const tgWebApp = window.Telegram.WebApp;
+            
+            try {
+                // WebApp konfigurieren
+                tgWebApp.ready();
+                tgWebApp.expand();
+                
+                // Theme-Anpassung
+                if (tgWebApp.colorScheme === 'dark') {
+                    document.body.classList.add('theme-dark');
+                }
+                
+                // Header-Farbe setzen
+                tgWebApp.setHeaderColor('#1a1a1a');
+                
+                // Back-Button Handler
+                tgWebApp.BackButton.onClick(() => {
+                    this.handleBackButton();
+                });
+                
+                // Main-Button für Aktionen
+                tgWebApp.MainButton.setText('Wallet Action');
+                tgWebApp.MainButton.hide();
+                
+                // Haptic Feedback aktivieren
+                this.hapticFeedback = tgWebApp.HapticFeedback;
+                
+                console.log('📱 Telegram WebApp initialized');
+                
+            } catch (error) {
+                console.warn('⚠️ Telegram WebApp setup failed:', error);
+            }
+        }
+    }
+
+    // Sicherheits-Features
+    setupSecurityFeatures() {
+        // Screen-Capture verhindern (soweit möglich)
+        document.addEventListener('keydown', (e) => {
+            // Print Screen blockieren
+            if (e.key === 'PrintScreen') {
+                e.preventDefault();
+                this.showSecurityWarning('Screenshots are disabled for security');
+            }
+            
+            // Developer Tools blockieren
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+                (e.ctrlKey && e.shiftKey && e.key === 'C') ||
+                (e.ctrlKey && e.key === 'U')) {
+                e.preventDefault();
+                this.showSecurityWarning('Developer tools are disabled');
+            }
+        });
+        
+        // Context-Menü blockieren
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+        
+        // Text-Selektion in sensitiven Bereichen verhindern
+        document.addEventListener('selectstart', (e) => {
+            if (e.target.classList.contains('no-select') || 
+                e.target.closest('.secure-content')) {
+                e.preventDefault();
+            }
+        });
+        
+        // Visibility-Change Handler für Auto-Lock
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                this.handleAppHidden();
+            } else {
+                this.handleAppVisible();
+            }
+        });
+    }
+
+    // Aktivitäts-Tracking für Auto-Lock
+    setupActivityTracking() {
+        const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+        
+        events.forEach(event => {
+            document.addEventListener(event, () => {
+                this.updateLastActivity();
+            }, { passive: true });
+        });
+    }
+
+    updateLastActivity() {
+        this.lastActivity = Date.now();
+        
+        // Session erweitern falls aktiv
+        if (SecureWalletStorage.isSessionValid()) {
+            SecureWalletStorage.extendSession();
+        }
+    }
+
+    // Komponenten laden
+    async waitForComponents() {
+        const requiredComponents = [
+            'CTCWallet',
+            'SecureWalletStorage', 
+            'DOM',
+            'Toast',
+            'welcomeScreen',
+            'walletScreen'
+        ];
+        
+        const maxWaitTime = 10000; // 10 Sekunden
+        const checkInterval = 200;
+        let elapsed = 0;
+        
+        while (elapsed < maxWaitTime) {
+            const missing = requiredComponents.filter(comp => 
+                typeof window[comp] === 'undefined'
+            );
+            
+            if (missing.length === 0) {
                 console.log('✅ All components loaded');
                 return;
             }
             
             await new Promise(resolve => setTimeout(resolve, checkInterval));
-            waited += checkInterval;
+            elapsed += checkInterval;
         }
         
-        throw new Error('Components failed to load within timeout');
+        throw new Error('Components failed to load in time');
     }
 
-    // Check for existing wallet/account system
-    checkExistingWallet() {
+    // UI initialisieren
+    async initializeUI() {
+        // Bestehende Accounts prüfen
+        const accounts = SecureWalletStorage.getAccountsList();
+        
+        if (accounts.length === 0) {
+            // Neuer Benutzer - Welcome Screen
+            if (window.welcomeScreen) {
+                window.welcomeScreen.showWelcome();
+            }
+        } else if (accounts.length === 1) {
+            // Ein Account - direkt zum Login
+            if (window.welcomeScreen) {
+                window.welcomeScreen.showLogin(accounts[0]);
+            }
+        } else {
+            // Mehrere Accounts - Account-Auswahl
+            if (window.accountSelector) {
+                window.accountSelector.showAccountSelection();
+            }
+        }
+    }
+
+    // Session-Timer
+    startSessionTimer() {
+        this.sessionTimer = setInterval(() => {
+            const now = Date.now();
+            const inactiveTime = now - this.lastActivity;
+            
+            // Auto-Lock bei Inaktivität
+            if (inactiveTime > this.maxInactivity && this.currentWallet && !this.currentWallet.isLocked()) {
+                console.log('🔒 Auto-lock due to inactivity');
+                this.lockWallet();
+            }
+            
+            // Session-Timeout prüfen
+            if (!SecureWalletStorage.isSessionValid() && this.currentWallet) {
+                console.log('🔒 Session expired');
+                this.lockWallet();
+            }
+            
+        }, 30000); // Alle 30 Sekunden prüfen
+    }
+
+    // Netzwerk-Monitoring
+    setupNetworkMonitoring() {
+        window.addEventListener('online', () => {
+            this.networkStatus = 'online';
+            Toast.success('Network connection restored');
+            
+            // Reconnect API
+            if (this.api) {
+                this.api.isOnline = true;
+            }
+        });
+        
+        window.addEventListener('offline', () => {
+            this.networkStatus = 'offline';
+            Toast.warning('Network connection lost');
+            
+            if (this.api) {
+                this.api.isOnline = false;
+            }
+        });
+        
+        // Initiale Verbindung testen
+        this.testNetworkConnection();
+    }
+
+    async testNetworkConnection() {
         try {
-            if (window.welcomeScreen && typeof window.welcomeScreen.checkExistingWallet === 'function') {
-                return window.welcomeScreen.checkExistingWallet();
-            } else {
-                console.error('welcomeScreen.checkExistingWallet not available');
-                return false;
+            if (this.api) {
+                const isConnected = await this.api.testConnection();
+                this.networkStatus = isConnected ? 'online' : 'offline';
             }
         } catch (error) {
-            console.error('Error checking existing wallet:', error);
-            return false;
+            this.networkStatus = 'offline';
         }
     }
 
-    // Initialize Telegram WebApp features
-    initTelegramWebApp() {
-        const tgWebApp = Utils.getTelegramWebApp();
+    // Wallet-Management
+    async createNewWallet(accountName, password) {
+        try {
+            console.log('🔑 Creating new wallet...');
+            
+            // Haptic Feedback
+            this.triggerHaptic('light');
+            
+            // Neues Wallet erstellen
+            const wallet = await CTCWallet.create();
+            
+            // Sicher speichern
+            const accountId = await SecureWalletStorage.saveWallet(
+                wallet, 
+                password, 
+                accountName
+            );
+            
+            this.currentWallet = wallet;
+            this.currentAccount = accountId;
+            
+            // UI aktualisieren
+            if (window.walletScreen) {
+                window.walletScreen.initialize(wallet);
+            }
+            
+            Toast.success('Wallet created successfully');
+            console.log('✅ New wallet created and saved');
+            
+            return wallet;
+            
+        } catch (error) {
+            console.error('❌ Error creating wallet:', error);
+            Toast.error(`Failed to create wallet: ${error.message}`);
+            throw error;
+        }
+    }
+
+    async restoreWallet(mnemonic, accountName, password) {
+        try {
+            console.log('🔄 Restoring wallet...');
+            
+            this.triggerHaptic('light');
+            
+            // Wallet wiederherstellen
+            const wallet = await CTCWallet.restore(mnemonic);
+            
+            // Sicher speichern
+            const accountId = await SecureWalletStorage.saveWallet(
+                wallet,
+                password,
+                accountName
+            );
+            
+            this.currentWallet = wallet;
+            this.currentAccount = accountId;
+            
+            // UI aktualisieren
+            if (window.walletScreen) {
+                window.walletScreen.initialize(wallet);
+            }
+            
+            Toast.success('Wallet restored successfully');
+            console.log('✅ Wallet restored and saved');
+            
+            return wallet;
+            
+        } catch (error) {
+            console.error('❌ Error restoring wallet:', error);
+            Toast.error(`Failed to restore wallet: ${error.message}`);
+            throw error;
+        }
+    }
+
+    async unlockWallet(accountId, password) {
+        try {
+            console.log('🔓 Unlocking wallet...');
+            
+            this.triggerHaptic('light');
+            
+            // Wallet laden und entschlüsseln
+            const walletData = await SecureWalletStorage.loadWallet(accountId, password);
+            
+            // Wallet-Instanz erstellen
+            const wallet = await CTCWallet.restore(walletData.mnemonic);
+            
+            this.currentWallet = wallet;
+            this.currentAccount = accountId;
+            
+            // UI aktualisieren
+            if (window.walletScreen) {
+                window.walletScreen.initialize(wallet);
+            }
+            
+            Toast.success('Wallet unlocked successfully');
+            console.log('✅ Wallet unlocked');
+            
+            return wallet;
+            
+        } catch (error) {
+            console.error('❌ Error unlocking wallet:', error);
+            Toast.error(`Failed to unlock wallet: ${error.message}`);
+            throw error;
+        }
+    }
+
+    lockWallet() {
+        if (this.currentWallet) {
+            this.currentWallet.lock();
+            this.currentWallet = null;
+            this.currentAccount = null;
+            
+            // Session löschen
+            SecureWalletStorage.clearSession();
+            
+            // Zurück zum Login
+            this.returnToLogin();
+            
+            Toast.info('Wallet locked for security');
+            console.log('🔒 Wallet locked');
+        }
+    }
+
+    returnToLogin() {
+        const accounts = SecureWalletStorage.getAccountsList();
         
-        if (tgWebApp) {
-            console.log('📱 Running in Telegram WebApp');
-            
-            try {
-                // Configure Telegram WebApp
-                tgWebApp.ready();
-                tgWebApp.expand();
-                
-                // Set theme colors (with version check)
-                if (tgWebApp.version >= 6.1) {
-                    tgWebApp.setHeaderColor('#1a1a1a');
-                    tgWebApp.setBackgroundColor('#1a1a1a');
-                }
-                
-                // Handle back button (with version check)
-                if (tgWebApp.version >= 6.1 && tgWebApp.BackButton) {
-                    tgWebApp.BackButton.onClick(() => {
-                        this.handleBackButton();
-                    });
-                }
-                
-                // Handle main button if needed
-                if (tgWebApp.MainButton) {
-                    tgWebApp.MainButton.hide();
-                }
-                
-            } catch (error) {
-                console.warn('Telegram WebApp setup error (non-critical):', error);
+        if (accounts.length === 0) {
+            if (window.welcomeScreen) {
+                window.welcomeScreen.showWelcome();
             }
-            
+        } else if (accounts.length === 1) {
+            if (window.welcomeScreen) {
+                window.welcomeScreen.showLogin(accounts[0]);
+            }
         } else {
-            console.log('🌐 Running in regular browser');
+            if (window.accountSelector) {
+                window.accountSelector.showAccountSelection();
+            }
         }
     }
 
-    // Set up global error handlers
-    setupErrorHandlers() {
-        // Handle uncaught errors
-        window.addEventListener('error', (event) => {
-            if (event.error) {
-                console.error('Uncaught error:', event.error);
-                Toast.error('An unexpected error occurred');
-            }
-        });
-
-        // Handle unhandled promise rejections
-        window.addEventListener('unhandledrejection', (event) => {
-            console.error('Unhandled promise rejection:', event.reason);
-            Toast.error('An unexpected error occurred');
-            event.preventDefault();
-        });
-
-        // Handle network errors
-        window.addEventListener('offline', () => {
-            Toast.error('You are offline. Some features may not work.');
-        });
-
-        window.addEventListener('online', () => {
-            Toast.success('Connection restored');
-        });
-    }
-
-    // Set up network monitoring
-    setupNetworkMonitoring() {
-        // Check node connectivity periodically
-        setInterval(async () => {
-            try {
-                if (window.ctcApi) {
-                    const isOnline = await window.ctcApi.isNodeOnline();
-                    // Store connection status for UI feedback
-                    window.nodeConnectionStatus = isOnline;
-                }
-            } catch (error) {
-                // Silently handle network check errors
-                window.nodeConnectionStatus = false;
-            }
-        }, 30000); // Check every 30 seconds
-    }
-
-    // Handle back button press
+    // Event-Handler
     handleBackButton() {
-        const tgWebApp = Utils.getTelegramWebApp();
-        
-        // Determine current screen and navigate back appropriately
-        if (this.currentScreen === 'send') {
-            if (window.walletScreen) {
-                window.walletScreen.show();
-            }
-        } else if (this.currentScreen === 'receive') {
-            if (window.walletScreen) {
-                window.walletScreen.show();
-            }
-        } else if (this.currentScreen === 'settings') {
-            if (window.walletScreen) {
-                window.walletScreen.show();
-            }
-        } else if (this.currentScreen === 'accounts') {
-            if (window.walletScreen) {
-                window.walletScreen.show();
-            }
-        } else {
-            // Default behavior - hide back button
-            if (tgWebApp && tgWebApp.BackButton) {
-                tgWebApp.BackButton.hide();
-            }
-        }
-    }
-
-    // Show error screen
-    showError(message, canRetry = true) {
-        const content = `
-            <div class="screen active">
-                <div class="illustration">
-                    <div class="icon" style="background: #ff4444;">⚠️</div>
-                    <h2 class="screen-title">Error</h2>
-                    <p class="screen-subtitle">${message}</p>
-                </div>
-                ${canRetry ? `
-                    <button class="btn btn-primary" onclick="location.reload()">
-                        Try Again
-                    </button>
-                ` : ''}
-                <button class="btn btn-secondary" onclick="app.reset()">
-                    Reset Application
-                </button>
-            </div>
-        `;
-        
-        if (DOM && DOM.setContent) {
-            DOM.setContent('app-container', content);
-        } else {
-            document.getElementById('app-container').innerHTML = content;
-        }
-    }
-
-    // Reset the application
-    reset() {
-        if (confirm('This will reset the application and may clear your wallet data. Continue?')) {
-            if (Storage && Storage.clear) {
-                Storage.clear();
+        if (this.isTelegramWebApp) {
+            // In Telegram WebApp
+            if (this.currentWallet && !this.currentWallet.isLocked()) {
+                // Wallet ist aktiv - zur Übersicht
+                if (window.walletScreen) {
+                    window.walletScreen.showOverview();
+                }
             } else {
-                localStorage.clear();
-            }
-            location.reload();
-        }
-    }
-
-    // Get application info
-    getInfo() {
-        return {
-            version: '1.0.0',
-            initialized: this.initialized,
-            currentScreen: this.currentScreen,
-            hasWallet: !!this.wallet,
-            nodeUrl: window.ctcApi?.baseUrl || 'Unknown',
-            isOnline: navigator.onLine,
-            isTelegram: Utils.isTelegramWebApp(),
-            components: {
-                welcomeScreen: !!window.welcomeScreen,
-                walletScreen: !!window.walletScreen,
-                accountManager: !!window.accountManager,
-                ctcApi: !!window.ctcApi
-            }
-        };
-    }
-
-    // Set current screen (for tracking)
-    setCurrentScreen(screenName) {
-        this.currentScreen = screenName;
-        
-        // Update Telegram WebApp back button
-        const tgWebApp = Utils.getTelegramWebApp();
-        if (tgWebApp && tgWebApp.BackButton && tgWebApp.version >= 6.1) {
-            if (screenName && screenName !== 'wallet') {
-                tgWebApp.BackButton.show();
-            } else {
-                tgWebApp.BackButton.hide();
+                // Zurück zur Auswahl
+                this.returnToLogin();
             }
         }
     }
 
-    // Show loading screen
-    showLoading(message = 'Loading...') {
-        const content = `
-            <div class="screen active">
-                <div class="illustration">
-                    <div class="icon">
-                        <div class="loading" style="width: 60px; height: 60px; border-width: 4px;"></div>
-                    </div>
-                    <h2 class="screen-title">${message}</h2>
-                </div>
-            </div>
-        `;
-        
-        if (DOM && DOM.setContent) {
-            DOM.setContent('app-container', content);
-        } else {
-            document.getElementById('app-container').innerHTML = content;
+    handleAppHidden() {
+        // App in Hintergrund - sensible Daten verbergen
+        if (this.currentWallet && !this.currentWallet.isLocked()) {
+            // Overlay für Privatsphäre
+            this.showPrivacyOverlay();
         }
     }
 
-    // Check if app is ready
-    isReady() {
-        return this.initialized;
+    handleAppVisible() {
+        // App wieder sichtbar
+        this.hidePrivacyOverlay();
+        this.updateLastActivity();
     }
 
-    // Get current wallet
-    getCurrentWallet() {
-        return window.walletScreen?.getCurrentWallet() || null;
-    }
-
-    // Emergency recovery mode
-    enterRecoveryMode() {
-        const content = `
-            <div class="screen active">
-                <div class="illustration">
-                    <div class="icon" style="background: #ff9800;">🔧</div>
-                    <h2 class="screen-title">Recovery Mode</h2>
-                    <p class="screen-subtitle">Use this to recover or reset your wallet</p>
-                </div>
-                
-                <button class="btn btn-secondary" onclick="welcomeScreen.showImport()">
-                    Import Wallet from Seed
-                </button>
-                
-                <button class="btn btn-secondary" onclick="welcomeScreen.showWelcome()">
-                    Create New Wallet
-                </button>
-                
-                <button class="btn btn-danger" onclick="app.reset()" style="margin-top: 40px;">
-                    Reset All Data
-                </button>
-            </div>
-        `;
-        
-        if (DOM && DOM.setContent) {
-            DOM.setContent('app-container', content);
-        } else {
-            document.getElementById('app-container').innerHTML = content;
-        }
-    }
-
-    // Development/debug functions
-    debug() {
-        return {
-            app: this.getInfo(),
-            wallet: this.getCurrentWallet(),
-            balance: window.walletScreen?.getCurrentBalance() || 0,
-            storage: {
-                accounts: Storage?.get('ctc-accounts') || null,
-                wallet: Storage?.get('ctc-wallet') || null,
-                hasData: !!(Storage?.get('ctc-accounts') || Storage?.get('ctc-wallet'))
-            },
-            api: {
-                baseUrl: window.ctcApi?.baseUrl || 'Unknown',
-                timeout: window.ctcApi?.timeout || 'Unknown'
-            }
-        };
-    }
-}
-
-// Application lifecycle management
-class AppLifecycle {
-    constructor(app) {
-        this.app = app;
-        this.setupLifecycleEvents();
-    }
-
-    setupLifecycleEvents() {
-        // Handle page visibility changes
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                this.onAppPause();
-            } else {
-                this.onAppResume();
-            }
-        });
-
-        // Handle page unload
-        window.addEventListener('beforeunload', () => {
-            this.onAppDestroy();
-        });
-
-        // Handle focus/blur events
-        window.addEventListener('focus', () => {
-            this.onAppResume();
-        });
-
-        window.addEventListener('blur', () => {
-            this.onAppPause();
-        });
-    }
-
-    onAppPause() {
-        console.log('📱 App paused');
-        // Stop balance updates to save resources
-        if (window.balanceManager) {
-            window.balanceManager.stopAutoUpdate();
-        }
-    }
-
-    onAppResume() {
-        console.log('📱 App resumed');
-        // Resume balance updates if wallet is loaded
-        const wallet = window.walletScreen?.getCurrentWallet();
-        if (wallet && window.balanceManager) {
-            window.balanceManager.startAutoUpdate(wallet.address);
-        }
-    }
-
-    onAppDestroy() {
-        console.log('📱 App destroyed');
-        // Clean up resources
-        if (window.balanceManager) {
-            window.balanceManager.stopAutoUpdate();
-        }
-    }
-}
-
-// Initialize application when DOM is ready
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🎯 DOM loaded, starting CTC Wallet App...');
-    
-    // Create global app instance
-    window.app = new CTCWalletApp();
-    window.appLifecycle = new AppLifecycle(window.app);
-    
-    // Initialize the application
-    try {
-        await window.app.init();
-    } catch (error) {
-        console.error('Failed to start app:', error);
-        if (window.app) {
-            window.app.showError('Failed to start application');
-        } else {
-            document.getElementById('app-container').innerHTML = `
-                <div class="screen active">
-                    <div class="illustration">
-                        <div class="icon" style="background: #ff4444;">⚠️</div>
-                        <h2 class="screen-title">Critical Error</h2>
-                        <p class="screen-subtitle">Failed to initialize the application</p>
-                    </div>
-                    <button class="btn btn-primary" onclick="location.reload()">
-                        Reload Page
-                    </button>
+    // UI-Hilfsfunktionen
+    showPrivacyOverlay() {
+        let overlay = document.getElementById('privacy-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'privacy-overlay';
+            overlay.innerHTML = `
+                <div class="privacy-content">
+                    <div class="privacy-icon">🔒</div>
+                    <h2>CTC Wallet</h2>
+                    <p>Tap to unlock</p>
                 </div>
             `;
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: #1a1a1a;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                color: white;
+                text-align: center;
+            `;
+            document.body.appendChild(overlay);
+            
+            overlay.addEventListener('click', () => {
+                this.hidePrivacyOverlay();
+            });
         }
+        overlay.style.display = 'flex';
+    }
+
+    hidePrivacyOverlay() {
+        const overlay = document.getElementById('privacy-overlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+    }
+
+    showError(message) {
+        Toast.error(message);
+        
+        // Fallback für kritische Fehler
+        const errorDiv = document.createElement('div');
+        errorDiv.innerHTML = `
+            <div class="error-screen">
+                <div class="error-content">
+                    <h2>⚠️ Error</h2>
+                    <p>${message}</p>
+                    <button onclick="location.reload()">Reload App</button>
+                </div>
+            </div>
+        `;
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+            color: white;
+            text-align: center;
+        `;
+        document.body.appendChild(errorDiv);
+    }
+
+    showSecurityWarning(message) {
+        Toast.warning(message);
+        this.triggerHaptic('error');
+        
+        // Log für Sicherheits-Audit
+        console.warn('🔒 Security Warning:', message);
+    }
+
+    triggerHaptic(type = 'light') {
+        if (this.hapticFeedback) {
+            try {
+                switch (type) {
+                    case 'light':
+                        this.hapticFeedback.selectionChanged();
+                        break;
+                    case 'medium':
+                        this.hapticFeedback.impactOccurred('medium');
+                        break;
+                    case 'heavy':
+                        this.hapticFeedback.impactOccurred('heavy');
+                        break;
+                    case 'success':
+                        this.hapticFeedback.notificationOccurred('success');
+                        break;
+                    case 'error':
+                        this.hapticFeedback.notificationOccurred('error');
+                        break;
+                }
+            } catch (error) {
+                // Haptic Feedback nicht verfügbar
+            }
+        }
+    }
+
+    // App-Status
+    getAppStatus() {
+        return {
+            initialized: this.initialized,
+            hasWallet: !!this.currentWallet,
+            isLocked: this.currentWallet ? this.currentWallet.isLocked() : true,
+            networkStatus: this.networkStatus,
+            deviceType: this.deviceType,
+            isTelegramWebApp: this.isTelegramWebApp,
+            isStandalone: this.isStandalone,
+            accounts: SecureWalletStorage.getAccountsList().length
+        };
+    }
+
+    // Cleanup
+    destroy() {
+        if (this.sessionTimer) {
+            clearInterval(this.sessionTimer);
+        }
+        
+        if (this.currentWallet) {
+            this.currentWallet.lock();
+        }
+        
+        // Sensitive Daten löschen
+        this.currentWallet = null;
+        this.currentAccount = null;
+        
+        console.log('🧹 App cleanup completed');
+    }
+}
+
+// Globale App-Instanz
+let app = null;
+
+// App-Utilities
+const AppUtils = {
+    // App initialisieren
+    async init() {
+        if (!app) {
+            app = new CTCWalletApp();
+        }
+        await app.init();
+        return app;
+    },
+
+    // App-Instanz abrufen
+    getInstance() {
+        return app;
+    },
+
+    // Sicherheits-Funktionen
+    security: {
+        // Auto-Lock
+        lockWallet() {
+            if (app) {
+                app.lockWallet();
+            }
+        },
+
+        // Session prüfen
+        checkSession() {
+            return SecureWalletStorage.isSessionValid();
+        },
+
+        // Aktivität aktualisieren
+        updateActivity() {
+            if (app) {
+                app.updateLastActivity();
+            }
+        }
+    }
+};
+
+// Auto-Initialisierung wenn DOM bereit
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        await AppUtils.init();
+    } catch (error) {
+        console.error('❌ Auto-initialization failed:', error);
     }
 });
 
-// Export for debugging
-window.debug = () => window.app?.debug() || 'App not initialized';
+// Cleanup bei Seiten-Verlassen
+window.addEventListener('beforeunload', () => {
+    if (app) {
+        app.destroy();
+    }
+});
 
-// Development helpers (only in development)
-if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    window.devtools = {
-        // Quick access to main components
-        app: () => window.app,
-        wallet: () => window.walletScreen?.getCurrentWallet(),
-        storage: window.Storage,
-        api: () => window.ctcApi,
-        
-        // Quick actions
-        resetApp: () => window.app?.reset(),
-        showRecovery: () => window.app?.enterRecoveryMode(),
-        clearStorage: () => window.Storage?.clear(),
-        
-        // Create test wallet
-        createTestWallet: async () => {
-            if (window.CTCWallet) {
-                const wallet = await window.CTCWallet.create();
-                console.log('Test wallet created:', wallet);
-                return wallet;
-            } else {
-                console.error('CTCWallet not available');
-            }
-        },
-        
-        // Get debug info
-        info: () => window.app?.debug() || 'App not initialized'
-    };
-    
-    console.log('🛠️ Development tools available via window.devtools');
-}
+// Export für globale Verwendung
+window.CTCWalletApp = CTCWalletApp;
+window.AppUtils = AppUtils;
