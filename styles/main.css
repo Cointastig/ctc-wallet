@@ -1,4 +1,4 @@
-/* styles/main.css - Core Styles */
+/* styles/main.css - Dunkler Hintergrund Core Styles */
 
 * {
     margin: 0;
@@ -7,11 +7,13 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Open Sans', 'Helvetica Neue', sans-serif;
     background: #1a1a1a;
-    color: white;
+    color: #ffffff;
     min-height: 100vh;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .container {
@@ -19,34 +21,36 @@ body {
     margin: 0 auto;
     min-height: 100vh;
     position: relative;
-    padding: 20px;
+    background: #1a1a1a;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
 }
 
-/* Screen System */
+/* Screen System mit subtilen Animationen */
 .screen {
     display: none;
-    animation: slideIn 0.3s ease-out;
+    animation: slideInGentle 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .screen.active {
     display: block;
 }
 
-@keyframes slideIn {
+@keyframes slideInGentle {
     from { 
         opacity: 0; 
-        transform: translateX(20px); 
+        transform: translateY(20px); 
     }
     to { 
         opacity: 1; 
-        transform: translateX(0); 
+        transform: translateY(0); 
     }
 }
 
+/* Mikro-Interaktionen */
 @keyframes shake {
     0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
+    25% { transform: translateX(-3px); }
+    75% { transform: translateX(3px); }
 }
 
 @keyframes spin {
@@ -54,31 +58,43 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-@keyframes float {
+@keyframes gentleFloat {
     0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
+    50% { transform: translateY(-10px); }
 }
 
-/* Headers */
+@keyframes pulseGlow {
+    0%, 100% { 
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    }
+    50% { 
+        box-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
+    }
+}
+
+/* Typography - Banking-App Seriosität */
 .screen-title {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: 600;
     text-align: center;
-    margin-bottom: 20px;
-    background: linear-gradient(45deg, #6B9EFF, #8B5FFF, #FF6B9D);
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    line-height: 1.2;
 }
 
 .screen-subtitle {
-    color: #888;
+    color: rgba(255, 255, 255, 0.8);
     text-align: center;
-    margin-bottom: 40px;
-    line-height: 1.5;
+    margin-bottom: 32px;
+    line-height: 1.6;
+    font-size: 16px;
+    font-weight: 400;
 }
 
-/* Floating dots decoration */
+/* Floating Decoration - subtiler für dunklen Hintergrund */
 .floating-dots {
     position: absolute;
     width: 100%;
@@ -90,77 +106,92 @@ body {
 
 .dot {
     position: absolute;
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    animation: float 6s ease-in-out infinite;
+    animation: gentleFloat 8s ease-in-out infinite;
+    opacity: 0.3;
 }
 
 .dot:nth-child(1) { 
-    background: #6B9EFF; 
-    top: 20%; 
+    background: rgba(59, 130, 246, 0.4); 
+    top: 15%; 
     left: 10%; 
     animation-delay: 0s; 
 }
 
 .dot:nth-child(2) { 
-    background: #8B5FFF; 
-    top: 60%; 
-    right: 10%; 
+    background: rgba(139, 92, 246, 0.4); 
+    top: 55%; 
+    right: 15%; 
     animation-delay: 2s; 
 }
 
 .dot:nth-child(3) { 
-    background: #FF6B9D; 
-    bottom: 30%; 
+    background: rgba(16, 185, 129, 0.4); 
+    bottom: 25%; 
     left: 20%; 
     animation-delay: 4s; 
 }
 
 .dot:nth-child(4) { 
-    background: #4ECDC4; 
-    top: 40%; 
-    right: 30%; 
+    background: rgba(168, 85, 247, 0.4); 
+    top: 35%; 
+    right: 25%; 
     animation-delay: 1s; 
 }
 
-/* Toast notifications */
+/* Toast Notifications - Dunkles Glasmorphismus */
 .toast {
     position: fixed;
-    top: 20px;
+    top: 60px;
     left: 50%;
     transform: translateX(-50%);
-    background: #4CAF50;
+    background: rgba(42, 42, 42, 0.9);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     color: white;
-    padding: 12px 24px;
-    border-radius: 8px;
+    padding: 16px 24px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     z-index: 1000;
-    animation: slideIn 0.3s ease-out;
+    animation: slideInGentle 0.3s ease-out;
+    font-weight: 500;
+    font-size: 14px;
+    max-width: 320px;
+    text-align: center;
 }
 
 .toast.error {
-    background: #f44336;
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.3);
 }
 
-/* Utility Classes */
+.toast.success {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+/* Utility Classes - Konsistent */
 .text-center { text-align: center; }
 .text-left { text-align: left; }
 .text-right { text-align: right; }
 
-.mb-10 { margin-bottom: 10px; }
-.mb-20 { margin-bottom: 20px; }
-.mb-30 { margin-bottom: 30px; }
-.mb-40 { margin-bottom: 40px; }
+.mb-10 { margin-bottom: 8px; }
+.mb-20 { margin-bottom: 16px; }
+.mb-30 { margin-bottom: 24px; }
+.mb-40 { margin-bottom: 32px; }
 
-.mt-10 { margin-top: 10px; }
-.mt-20 { margin-top: 20px; }
-.mt-30 { margin-top: 30px; }
-.mt-40 { margin-top: 40px; }
+.mt-10 { margin-top: 8px; }
+.mt-20 { margin-top: 16px; }
+.mt-30 { margin-top: 24px; }
+.mt-40 { margin-top: 32px; }
 
-.p-10 { padding: 10px; }
-.p-20 { padding: 20px; }
-.p-30 { padding: 30px; }
-.p-40 { padding: 40px; }
+.p-10 { padding: 8px; }
+.p-20 { padding: 16px; }
+.p-30 { padding: 24px; }
+.p-40 { padding: 32px; }
 
 .flex { display: flex; }
 .flex-center { 
@@ -179,13 +210,137 @@ body {
 .hidden { display: none; }
 .visible { display: block; }
 
-/* Responsive */
+/* Loading Spinner - Modernisiert für dunklen Hintergrund */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    border-top: 2px solid #3B82F6;
+    animation: spin 1s linear infinite;
+}
+
+/* Responsive Design - Mobile First */
 @media (max-width: 480px) {
     .container {
-        padding: 15px;
+        padding: 12px;
     }
     
     .screen-title {
-        font-size: 20px;
+        font-size: 24px;
     }
+    
+    .screen-subtitle {
+        font-size: 15px;
+        margin-bottom: 28px;
+    }
+    
+    .toast {
+        left: 16px;
+        right: 16px;
+        transform: none;
+        max-width: none;
+    }
+}
+
+/* High Contrast Support */
+@media (prefers-contrast: high) {
+    .dot {
+        opacity: 0.6;
+    }
+    
+    .toast {
+        border-width: 2px;
+    }
+    
+    .screen-title {
+        -webkit-text-fill-color: #ffffff;
+        background: none;
+        color: #ffffff;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .screen {
+        animation: none;
+    }
+    
+    .dot {
+        animation: none;
+    }
+}
+
+/* Dark Mode Optimization - bereits optimal für dunklen Hintergrund */
+@media (prefers-color-scheme: dark) {
+    /* Design ist bereits für Dark Mode optimiert */
+}
+
+/* Focus Management für Accessibility */
+*:focus {
+    outline: 2px solid #3B82F6;
+    outline-offset: 2px;
+}
+
+*:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Selection Styling */
+::selection {
+    background: rgba(59, 130, 246, 0.3);
+    color: white;
+}
+
+::-moz-selection {
+    background: rgba(59, 130, 246, 0.3);
+    color: white;
+}
+
+/* Scroll Behavior */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Webkit Scrollbar Styling für dunklen Hintergrund */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Success States */
+.success-state {
+    border-color: #10B981 !important;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3) !important;
+}
+
+/* Error States */
+.error-state {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3) !important;
+}
+
+/* Pulse Glow Animation */
+.pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
 }
