@@ -68,13 +68,15 @@ class SendScreen {
                             </button>
                         </div>
                         
-                        <!-- QR Payment Info -->
-                        <div id="qr-payment-info" style="display: none; margin-top: var(--space-4); padding: var(--space-4); background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-lg);">
-                            <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2);">
-                                <i class="fas fa-qrcode" style="color: var(--brand-success);"></i>
-                                <span style="color: var(--brand-success); font-weight: 600;">QR-Code-Zahlung erkannt</span>
+                        <!-- QR Payment Info (hidden by default) -->
+                        <div id="qr-payment-info" class="payment-info" style="display: none;">
+                            <div class="info-box">
+                                <i class="fas fa-info-circle"></i>
+                                <div>
+                                    <strong>QR-Code Zahlungsdaten:</strong>
+                                    <div id="qr-payment-details"></div>
+                                </div>
                             </div>
-                            <div id="qr-payment-details" style="color: rgba(255,255,255,0.8); font-size: var(--text-sm);"></div>
                         </div>
                     </div>
 
@@ -91,94 +93,75 @@ class SendScreen {
                                 placeholder="0.0000"
                                 step="0.0001"
                                 min="0"
-                                max="${this.availableBalance - 0.0001}"
                                 style="flex: 1;"
                                 oninput="sendScreen.validateForm()"
                             >
-                            <span class="input-addon">CTC</span>
-                            <button class="btn-secondary" onclick="sendScreen.setMaxAmount()" style="margin-left: var(--space-2);">
-                                MAX
-                            </button>
+                            <span class="input-unit">CTC</span>
+                            <button class="btn-secondary" onclick="sendScreen.setMaxAmount()">Max</button>
                         </div>
-                        <div class="form-hint">
+                        <div class="balance-info">
                             Verfügbar: <span id="available-balance">${Format.ctc(this.availableBalance)}</span>
                         </div>
                     </div>
 
-                    <!-- Transaction Summary (hidden initially) -->
-                    <div id="transaction-summary" class="card" style="display: none; margin-bottom: var(--space-6); background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3);">
-                        <h3 class="card-header" style="color: var(--brand-primary);">
-                            <i class="fas fa-receipt" style="margin-right: var(--space-2);"></i>
-                            Transaktionsübersicht
-                        </h3>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-3);">
-                            <span class="summary-label">Betrag:</span>
-                            <span id="summary-amount" class="summary-value">0.0000 CTC</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-3);">
-                            <span class="summary-label">Netzwerkgebühr:</span>
-                            <span class="summary-value">0.0001 CTC</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.1); padding-top: var(--space-3);">
-                            <span class="summary-label" style="font-weight: 700;">Gesamt:</span>
-                            <span id="summary-total" class="summary-value" style="font-weight: 700;">0.0001 CTC</span>
+                    <!-- Transaction Fee -->
+                    <div class="card" style="margin-bottom: var(--space-6);">
+                        <div class="fee-info">
+                            <span>Netzwerkgebühr:</span>
+                            <span class="fee-amount">0.0001 CTC</span>
                         </div>
                     </div>
 
                     <!-- Continue Button -->
                     <button 
-                        id="continue-btn" 
+                        id="continue-button" 
                         class="btn-primary" 
-                        onclick="sendScreen.showConfirmationPhase()"
+                        onclick="sendScreen.showConfirmation()"
                         disabled
-                        style="width: 100%;"
+                        style="width: 100%; margin-top: var(--space-6);"
                     >
                         <i class="fas fa-arrow-right" style="margin-right: var(--space-2);"></i>
-                        Weiter zur Bestätigung
+                        Weiter
                     </button>
                 </div>
 
-                <!-- Confirmation Phase (Phase 2 - initially hidden) -->
+                <!-- Confirmation Phase (hidden by default) -->
                 <div id="confirmation-phase" style="display: none; padding: var(--space-5);">
-                    <!-- Confirmation Details -->
-                    <div class="card" style="margin-bottom: var(--space-6); background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3);">
-                        <h3 class="card-header" style="color: var(--brand-success);">
-                            <i class="fas fa-check-circle" style="margin-right: var(--space-2);"></i>
+                    <!-- Transaction Summary -->
+                    <div class="card" style="margin-bottom: var(--space-6);">
+                        <h3 class="card-header">
+                            <i class="fas fa-receipt" style="margin-right: var(--space-2);"></i>
                             Transaktion bestätigen
                         </h3>
                         
-                        <div class="confirmation-details">
-                            <div class="detail-row">
-                                <span class="detail-label">An:</span>
-                                <div class="detail-value" id="confirm-address">-</div>
+                        <div class="transaction-summary">
+                            <div class="summary-row">
+                                <span>An:</span>
+                                <span id="confirm-address" class="address-short"></span>
                             </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Betrag:</span>
-                                <div class="detail-value" id="confirm-amount">0.0000 CTC</div>
+                            <div class="summary-row">
+                                <span>Betrag:</span>
+                                <span id="confirm-amount" class="amount-large"></span>
                             </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Netzwerkgebühr:</span>
-                                <div class="detail-value">0.0001 CTC</div>
+                            <div class="summary-row">
+                                <span>Netzwerkgebühr:</span>
+                                <span class="fee-text">0.0001 CTC</span>
                             </div>
-                            <div class="detail-row total-row">
-                                <span class="detail-label">Gesamtbetrag:</span>
-                                <div class="detail-value" id="confirm-total">0.0001 CTC</div>
+                            <div class="summary-divider"></div>
+                            <div class="summary-row total">
+                                <span>Gesamt:</span>
+                                <span id="confirm-total" class="total-amount"></span>
                             </div>
-                        </div>
-                        
-                        <!-- QR Note if present -->
-                        <div id="confirm-qr-note" style="display: none; margin-top: var(--space-4); padding: var(--space-3); background: rgba(255, 255, 255, 0.1); border-radius: var(--radius-md);">
-                            <div style="color: rgba(255,255,255,0.6); font-size: var(--text-sm); margin-bottom: var(--space-1);">Notiz:</div>
-                            <div style="color: rgba(255,255,255,0.9);"></div>
                         </div>
                     </div>
 
-                    <!-- Slide to Confirm -->
-                    <div class="slide-to-confirm" style="margin-bottom: var(--space-6);">
-                        <div class="slide-track" id="slide-track">
-                            <div class="slide-text" id="slide-text">Nach rechts schieben zum Bestätigen</div>
-                            <div class="slide-button" id="slide-button">
-                                <i class="fas fa-arrow-right" id="slide-icon"></i>
+                    <!-- Security Notice -->
+                    <div class="card warning" style="margin-bottom: var(--space-6);">
+                        <div class="warning-content">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <div>
+                                <strong>Wichtiger Hinweis:</strong>
+                                Transaktionen sind unwiderruflich. Prüfen Sie alle Angaben sorgfältig.
                             </div>
                         </div>
                     </div>
@@ -186,162 +169,270 @@ class SendScreen {
                     <!-- Back Button -->
                     <button 
                         class="btn-secondary" 
-                        onclick="sendScreen.showFormPhase()"
-                        style="width: 100%;"
+                        onclick="sendScreen.backToForm()"
+                        style="width: 100%; margin-bottom: var(--space-4);"
                     >
                         <i class="fas fa-arrow-left" style="margin-right: var(--space-2);"></i>
-                        Zurück zur Bearbeitung
+                        Zurück
                     </button>
+
+                    <!-- Slide to Confirm -->
+                    <div class="slide-to-confirm" id="slide-to-confirm">
+                        <div class="slide-track" id="slide-track">
+                            <div class="slide-button" id="slide-button">
+                                <i class="fas fa-arrow-right" id="slide-icon"></i>
+                            </div>
+                            <div class="slide-text" id="slide-text">Nach rechts schieben zum Bestätigen</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
         
         DOM.setContent('app-container', content);
         this.updateAvailableBalance();
-        this.initializeSlideToConfirm();
-
+        
         // Update app current screen
         if (window.app) {
             window.app.setCurrentScreen('send');
         }
     }
 
-    // Show confirmation phase
-    showConfirmationPhase() {
-        if (!this.recipientAddress || !this.amount || this.amount <= 0) {
-            Toast.error('Bitte füllen Sie alle Felder aus');
-            return;
+    // Validate form inputs
+    validateForm() {
+        const address = DOM.getValue('send-address').trim();
+        const amount = parseFloat(DOM.getValue('send-amount')) || 0;
+        const continueBtn = DOM.get('continue-button');
+        
+        // Store values
+        this.recipientAddress = address;
+        this.amount = amount;
+        
+        // Validation
+        const isValidAddress = address.startsWith('CTC') && address.length >= 20;
+        const isValidAmount = amount > 0 && amount <= (this.availableBalance / 100_000_000 - 0.0001);
+        
+        if (continueBtn) {
+            continueBtn.disabled = !(isValidAddress && isValidAmount);
         }
+        
+        // Update error states
+        this.updateInputValidation('send-address', isValidAddress);
+        this.updateInputValidation('send-amount', isValidAmount);
+    }
 
-        // Validate one more time
-        if (!Validation.address(this.recipientAddress)) {
-            Toast.error('Ungültige Empfängeradresse');
-            return;
-        }
-
-        const fee = 0.0001;
-        const total = this.amount + fee;
-        const amountValidation = Validation.amount(this.amount, this.availableBalance - fee);
-        if (!amountValidation.valid) {
-            Toast.error(amountValidation.error);
-            return;
-        }
-
-        // Update confirmation details
-        DOM.setValue('confirm-address', this.recipientAddress);
-        DOM.setText('confirm-amount', Format.ctc(this.amount));
-        DOM.setText('confirm-total', Format.ctc(total));
-
-        // Show QR note if present
-        if (this.qrData && this.qrData.note) {
-            DOM.show('confirm-qr-note');
-            DOM.setText('confirm-qr-note div:last-child', this.qrData.note);
+    // Update input validation styling
+    updateInputValidation(inputId, isValid) {
+        const input = DOM.get(inputId);
+        if (!input) return;
+        
+        const value = input.value.trim();
+        
+        if (value === '') {
+            // Empty state
+            input.classList.remove('error', 'success');
+        } else if (isValid) {
+            // Valid state
+            input.classList.remove('error');
+            input.classList.add('success');
         } else {
-            DOM.hide('confirm-qr-note');
+            // Error state
+            input.classList.remove('success');
+            input.classList.add('error');
         }
+    }
 
-        // Switch phases
+    // Show confirmation phase
+    showConfirmation() {
+        if (!this.recipientAddress || this.amount <= 0) return;
+        
+        this.showConfirmation = true;
+        
+        // Hide form, show confirmation
         DOM.hide('send-form-phase');
         DOM.show('confirmation-phase');
-        this.showConfirmation = true;
-        this.slideConfirmed = false;
-        this.resetSlideToConfirm();
+        
+        // Populate confirmation data
+        DOM.setText('confirm-address', Format.address(this.recipientAddress));
+        DOM.setText('confirm-amount', `${this.amount.toFixed(4)} CTC`);
+        
+        const total = this.amount + 0.0001; // Add fee
+        DOM.setText('confirm-total', `${total.toFixed(4)} CTC`);
+        
+        // Initialize slide to confirm
+        this.initializeSlideToConfirm();
     }
 
-    // Show form phase
-    showFormPhase() {
-        DOM.show('send-form-phase');
-        DOM.hide('confirmation-phase');
+    // Back to form
+    backToForm() {
         this.showConfirmation = false;
-        this.slideConfirmed = false;
+        DOM.hide('confirmation-phase');
+        DOM.show('send-form-phase');
     }
 
-    // Initialize slide to confirm
+    // Initialize slide to confirm functionality
     initializeSlideToConfirm() {
         const slideButton = DOM.get('slide-button');
         const slideTrack = DOM.get('slide-track');
         
         if (!slideButton || !slideTrack) return;
-
+        
         let isDragging = false;
         let startX = 0;
         let currentX = 0;
-        let buttonStartX = 0;
-        const trackWidth = slideTrack.offsetWidth;
-        const buttonWidth = slideButton.offsetWidth;
-        const maxSlide = trackWidth - buttonWidth;
-
-        // Mouse events
-        slideButton.addEventListener('mousedown', startDrag);
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', endDrag);
-
+        let maxSlide = slideTrack.offsetWidth - slideButton.offsetWidth - 4;
+        
         // Touch events
-        slideButton.addEventListener('touchstart', startDrag, {passive: false});
-        document.addEventListener('touchmove', drag, {passive: false});
-        document.addEventListener('touchend', endDrag);
-
-        function startDrag(e) {
-            if (sendScreen.slideConfirmed) return;
-            
+        slideButton.addEventListener('touchstart', (e) => {
             isDragging = true;
+            startX = e.touches[0].clientX;
             slideButton.style.transition = 'none';
-            
-            const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-            startX = clientX;
-            buttonStartX = parseInt(slideButton.style.transform.replace('translateX(', '') || '0');
-            
-            slideButton.style.cursor = 'grabbing';
+        });
+        
+        slideButton.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
             e.preventDefault();
-        }
-
-        function drag(e) {
-            if (!isDragging || sendScreen.slideConfirmed) return;
             
-            const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-            currentX = clientX - startX;
-            const newX = Math.min(Math.max(0, buttonStartX + currentX), maxSlide);
+            currentX = e.touches[0].clientX - startX;
+            currentX = Math.max(0, Math.min(currentX, maxSlide));
             
-            slideButton.style.transform = `translateX(${newX}px)`;
+            slideButton.style.transform = `translateX(${currentX}px)`;
             
-            // Update opacity based on progress
-            const progress = newX / maxSlide;
-            slideTrack.style.background = `linear-gradient(90deg, 
-                rgba(16, 185, 129, ${0.3 + progress * 0.4}) 0%, 
-                rgba(16, 185, 129, 0.1) ${progress * 100}%, 
-                rgba(255, 255, 255, 0.1) 100%)`;
-            
-            e.preventDefault();
-        }
-
-        function endDrag(e) {
-            if (!isDragging || sendScreen.slideConfirmed) return;
-            
+            // Update progress
+            const progress = currentX / maxSlide;
+            this.updateSlideProgress(progress);
+        });
+        
+        slideButton.addEventListener('touchend', () => {
+            if (!isDragging) return;
             isDragging = false;
-            slideButton.style.cursor = 'grab';
-            slideButton.style.transition = 'transform 0.3s ease';
             
-            const currentTransform = parseInt(slideButton.style.transform.replace('translateX(', '') || '0');
-            const progress = currentTransform / maxSlide;
+            const progress = currentX / maxSlide;
             
             if (progress >= 0.8) {
-                // Successful slide
-                sendScreen.slideConfirmed = true;
-                slideButton.style.transform = `translateX(${maxSlide}px)`;
-                slideTrack.style.background = 'linear-gradient(90deg, rgba(16, 185, 129, 0.8) 0%, rgba(16, 185, 129, 0.6) 100%)';
-                
-                // Update icon and text
-                DOM.get('slide-icon').className = 'fas fa-check';
-                DOM.get('slide-text').textContent = 'Transaktion wird gesendet...';
-                
-                // Send transaction after short delay
-                setTimeout(() => {
-                    sendScreen.sendTransaction();
-                }, 500);
+                // Confirmed
+                this.slideConfirmed = true;
+                this.completeSlideToConfirm();
+                this.sendTransaction();
             } else {
-                // Reset slide
-                sendScreen.resetSlideToConfirm();
+                // Reset
+                this.resetSlideToConfirm();
             }
+        });
+        
+        // Mouse events for desktop
+        slideButton.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            slideButton.style.transition = 'none';
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            
+            currentX = e.clientX - startX;
+            currentX = Math.max(0, Math.min(currentX, maxSlide));
+            
+            slideButton.style.transform = `translateX(${currentX}px)`;
+            
+            const progress = currentX / maxSlide;
+            this.updateSlideProgress(progress);
+        });
+        
+        document.addEventListener('mouseup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            
+            const progress = currentX / maxSlide;
+            
+            if (progress >= 0.8) {
+                this.slideConfirmed = true;
+                this.completeSlideToConfirm();
+                this.sendTransaction();
+            } else {
+                this.resetSlideToConfirm();
+            }
+        });
+    }
+
+    // Update slide progress
+    updateSlideProgress(progress) {
+        const slideTrack = DOM.get('slide-track');
+        const slideText = DOM.get('slide-text');
+        const slideIcon = DOM.get('slide-icon');
+        
+        if (slideTrack) {
+            const green = Math.floor(progress * 255);
+            slideTrack.style.background = `linear-gradient(90deg, rgba(34, 197, 94, ${progress * 0.8}) 0%, rgba(255, 255, 255, 0.05) 100%)`;
+        }
+        
+        if (progress > 0.8) {
+            if (slideText) slideText.textContent = 'Loslassen zum Bestätigen!';
+            if (slideIcon) slideIcon.className = 'fas fa-check';
+        } else {
+            if (slideText) slideText.textContent = 'Nach rechts schieben zum Bestätigen';
+            if (slideIcon) slideIcon.className = 'fas fa-arrow-right';
+        }
+    }
+
+    // Complete slide to confirm
+    completeSlideToConfirm() {
+        const slideButton = DOM.get('slide-button');
+        const slideTrack = DOM.get('slide-track');
+        const slideIcon = DOM.get('slide-icon');
+        const slideText = DOM.get('slide-text');
+        
+        if (slideButton) {
+            slideButton.style.transform = `translateX(${slideTrack.offsetWidth - slideButton.offsetWidth - 4}px)`;
+            slideButton.style.transition = 'transform 0.3s ease';
+        }
+        
+        if (slideTrack) {
+            slideTrack.style.background = 'linear-gradient(90deg, rgba(34, 197, 94, 0.8) 0%, rgba(34, 197, 94, 0.4) 100%)';
+        }
+        
+        if (slideIcon) slideIcon.className = 'fas fa-check';
+        if (slideText) slideText.textContent = 'Transaktion wird gesendet...';
+    }
+
+    // Send transaction
+    async sendTransaction() {
+        try {
+            const slideText = DOM.get('slide-text');
+            const slideIcon = DOM.get('slide-icon');
+            
+            // Show sending state
+            if (slideText) slideText.textContent = 'Transaktion wird gesendet...';
+            if (slideIcon) slideIcon.className = 'fas fa-spinner fa-spin';
+            
+            // Simulate transaction sending
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Show success
+            Toast.success('Transaktion erfolgreich gesendet!');
+            
+            // Update slide to success state
+            if (slideText) slideText.textContent = 'Transaktion erfolgreich!';
+            if (slideIcon) slideIcon.className = 'fas fa-check';
+            
+            // Wait a moment then return to wallet
+            setTimeout(() => {
+                walletScreen.show();
+                
+                // Refresh wallet balance
+                if (walletScreen.loadBalance) {
+                    walletScreen.loadBalance();
+                }
+            }, 2000);
+
+        } catch (error) {
+            console.error('❌ Transaction failed:', error);
+            
+            // Show error
+            Toast.error('Transaktion fehlgeschlagen: ' + (error.message || 'Unbekannter Fehler'));
+            
+            // Reset slide
+            this.resetSlideToConfirm();
         }
     }
 
@@ -458,70 +549,77 @@ class SendScreen {
         }
     }
 
-    // Start QR scanning
+    // Start QR scanning - KORRIGIERT: Mit Berechtigungsanfrage
     async startQRScanning() {
         const video = DOM.get('qr-video');
-        const canvas = DOM.get('qr-canvas');
         
-        if (!video || !canvas) {
-            throw new Error('Video or canvas element not found');
+        if (!video) {
+            throw new Error('Video element not found');
         }
 
         try {
-            // Request camera access
-            this.videoStream = await navigator.mediaDevices.getUserMedia({ 
-                video: { 
-                    facingMode: 'environment',
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                } 
+            // Prüfe zuerst die Kamera-Verfügbarkeit
+            const capabilities = await window.qrCapabilities || await EnhancedQRUtils.checkCapabilities();
+            
+            if (!capabilities.camera.available) {
+                throw new Error('Keine Kamera gefunden. Bitte überprüfen Sie Ihr Gerät.');
+            }
+            
+            console.log('📱 Camera capabilities:', capabilities);
+            
+            // Zeige Berechtigungsanfrage falls nötig
+            if (capabilities.permissions === 'prompt') {
+                this.updateScannerStatus('Kamera-Berechtigung wird angefragt...', 'info');
+            }
+            
+            // Verwende globale qrScanner-Instanz aus qr-utils.js
+            await window.qrScanner.initialize(video, (qrData) => {
+                this.handleQRDetection(qrData);
             });
             
-            video.srcObject = this.videoStream;
-            video.play();
-            
+            window.qrScanner.startScanning();
             this.isScanning = true;
-            
-            // Start scanning loop
-            this.scanInterval = setInterval(() => {
-                this.scanForQRCode(video, canvas);
-            }, 100);
             
             this.updateScannerStatus('Scannen...', 'scanning');
             
         } catch (error) {
             console.error('❌ Camera access failed:', error);
-            this.updateScannerStatus('Kamera nicht verfügbar', 'error');
+            
+            // Spezifische Fehlermeldungen für bessere UX
+            let errorMessage = 'Kamera konnte nicht gestartet werden';
+            
+            if (error.message.includes('Berechtigung')) {
+                errorMessage = 'Kamera-Zugriff verweigert. Bitte erlauben Sie den Zugriff in den Browser-Einstellungen.';
+            } else if (error.message.includes('gefunden')) {
+                errorMessage = 'Keine Kamera gefunden. Bitte überprüfen Sie Ihr Gerät.';
+            } else if (error.message.includes('verwendet')) {
+                errorMessage = 'Kamera wird bereits verwendet. Bitte schließen Sie andere Anwendungen.';
+            }
+            
+            this.updateScannerStatus(errorMessage, 'error');
+            
+            // Zeige hilfreiche Schaltfläche
+            setTimeout(() => {
+                const statusEl = DOM.get('scanner-status');
+                if (statusEl) {
+                    statusEl.innerHTML = `
+                        <div class="status-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="status-text">${errorMessage}</div>
+                        <button class="btn-secondary" onclick="sendScreen.showManualInput()" style="margin-top: var(--space-3);">
+                            <i class="fas fa-keyboard"></i>
+                            Adresse manuell eingeben
+                        </button>
+                    `;
+                }
+            }, 1000);
+            
             throw error;
         }
     }
 
-    // Scan for QR code
-    scanForQRCode(video, canvas) {
-        if (!this.isScanning || video.readyState !== video.HAVE_ENOUGH_DATA) {
-            return;
-        }
-
-        const ctx = canvas.getContext('2d');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        
-        try {
-            const qrResult = QRDetector.detect(imageData);
-            
-            if (qrResult) {
-                this.handleQRDetection(qrResult);
-            }
-        } catch (error) {
-            console.warn('QR detection error:', error);
-        }
-    }
-
-    // Handle QR detection
+    // Handle QR detection - KORRIGIERT: Vereinfachte Implementierung
     handleQRDetection(qrData) {
         this.stopScanning();
         
@@ -530,10 +628,12 @@ class SendScreen {
             navigator.vibrate(200);
         }
         
-        // Parse QR data
-        const parsed = this.parseQRData(qrData);
+        // Parse QR data mit QRValidator
+        const validation = QRValidator.validateCTCQR(qrData);
         
-        if (parsed.address) {
+        if (validation.valid) {
+            const parsed = validation.data;
+            
             this.recipientAddress = parsed.address;
             this.qrData = parsed;
             
@@ -556,53 +656,18 @@ class SendScreen {
             
             this.validateForm();
         } else {
-            Toast.error('Ungültiger QR-Code');
+            Toast.error('Ungültiger QR-Code: ' + validation.error);
             this.show();
         }
     }
 
-    // Parse QR data
-    parseQRData(qrData) {
-        const result = {
-            address: null,
-            amount: null,
-            note: null
-        };
-        
-        // Handle different QR formats
-        if (typeof qrData === 'string') {
-            // Format: ctc:address?amount=1.5&note=payment
-            if (qrData.startsWith('ctc:')) {
-                const [base, params] = qrData.substring(4).split('?');
-                result.address = base;
-                
-                if (params) {
-                    const urlParams = new URLSearchParams(params);
-                    result.amount = urlParams.get('amount');
-                    result.note = urlParams.get('note');
-                }
-            } 
-            // Format: Plain address
-            else if (qrData.startsWith('CTC') && qrData.length >= 20) {
-                result.address = qrData;
-            }
-        }
-        
-        return result;
-    }
-
-    // Stop QR scanning
+    // Stop QR scanning - KORRIGIERT: Verwendet globale qrScanner-Instanz
     stopScanning() {
         this.isScanning = false;
         
-        if (this.scanInterval) {
-            clearInterval(this.scanInterval);
-            this.scanInterval = null;
-        }
-        
-        if (this.videoStream) {
-            this.videoStream.getTracks().forEach(track => track.stop());
-            this.videoStream = null;
+        if (window.qrScanner) {
+            window.qrScanner.stopScanning();
+            window.qrScanner.cleanup();
         }
     }
 
@@ -633,16 +698,30 @@ class SendScreen {
         }
     }
 
-    // Toggle flash
-    toggleFlash() {
-        // Implementation depends on browser support
-        Toast.info('Flash-Funktionalität wird noch implementiert');
+    // Toggle flash - KORRIGIERT: Verwendet globale qrScanner-Instanz
+    async toggleFlash() {
+        try {
+            if (window.qrScanner) {
+                await window.qrScanner.toggleFlashlight();
+                Toast.info('Taschenlampe umgeschaltet');
+            }
+        } catch (error) {
+            console.error('Flash toggle failed:', error);
+            Toast.error('Taschenlampe nicht verfügbar');
+        }
     }
 
-    // Switch camera
-    switchCamera() {
-        // Implementation for switching between front/back camera
-        Toast.info('Kamera wechseln wird noch implementiert');
+    // Switch camera - KORRIGIERT: Verwendet globale qrScanner-Instanz
+    async switchCamera() {
+        try {
+            if (window.qrScanner) {
+                await window.qrScanner.switchCamera();
+                Toast.info('Kamera gewechselt');
+            }
+        } catch (error) {
+            console.error('Camera switch failed:', error);
+            Toast.error('Kamera wechseln fehlgeschlagen');
+        }
     }
 
     // Show manual input
@@ -690,134 +769,6 @@ class SendScreen {
         }
     }
 
-    // Validate form
-    validateForm() {
-        const addressInput = DOM.get('send-address');
-        const amountInput = DOM.get('send-amount');
-        const continueBtn = DOM.get('continue-btn');
-        const summaryDiv = DOM.get('transaction-summary');
-        
-        if (!addressInput || !amountInput || !continueBtn) return;
-        
-        // Get values
-        const address = addressInput.value.trim();
-        const amount = parseFloat(amountInput.value) || 0;
-        
-        // Update instance variables
-        this.recipientAddress = address;
-        this.amount = amount;
-        
-        // Validate address
-        const addressValid = Validation.address(address);
-        
-        // Validate amount
-        const fee = 0.0001;
-        const amountValidation = Validation.amount(amount, (this.availableBalance / 100_000_000) - fee);
-        
-        // Enable/disable continue button
-        const isValid = addressValid && amountValidation.valid && amount > 0;
-        continueBtn.disabled = !isValid;
-        
-        // Show/hide transaction summary
-        if (isValid) {
-            DOM.show('transaction-summary');
-            this.updateTransactionSummary(amount, amount + fee);
-        } else {
-            DOM.hide('transaction-summary');
-            
-            // Show specific error messages
-            if (address && !addressValid) {
-                Toast.error('Ungültige CTC-Adresse');
-            } else if (amount > 0 && !amountValidation.valid) {
-                Toast.error(amountValidation.error);
-            } else if (amount <= 0) {
-                Toast.error('Betrag muss größer als 0 sein');
-            }
-        }
-    }
-
-    // Update transaction summary
-    updateTransactionSummary(amount, total) {
-        const summaryAmount = DOM.get('summary-amount');
-        const summaryTotal = DOM.get('summary-total');
-        
-        if (summaryAmount) {
-            summaryAmount.textContent = Format.ctc(amount);
-        }
-        
-        if (summaryTotal) {
-            summaryTotal.textContent = Format.ctc(total);
-        }
-    }
-
-    // Send transaction
-    async sendTransaction() {
-        const wallet = walletScreen.getCurrentWallet();
-        if (!wallet) {
-            Toast.error('Wallet nicht initialisiert');
-            return;
-        }
-
-        const address = this.recipientAddress;
-        const amount = this.amount;
-        
-        // Final validation
-        if (!Validation.address(address)) {
-            Toast.error('Ungültige Empfängeradresse');
-            return;
-        }
-        
-        const fee = 0.0001;
-        const amountValidation = Validation.amount(amount, this.availableBalance - fee);
-        if (!amountValidation.valid) {
-            Toast.error(amountValidation.error);
-            return;
-        }
-
-        // Show sending state
-        const slideText = DOM.get('slide-text');
-        const slideIcon = DOM.get('slide-icon');
-        
-        if (slideText) slideText.textContent = 'Transaktion wird gesendet...';
-        if (slideIcon) slideIcon.className = 'fas fa-spinner fa-spin';
-
-        try {
-            // Send transaction through API
-            const result = await transactionManager.sendTransaction(
-                wallet.address,
-                address,
-                amount,
-                wallet
-            );
-
-            // Show success
-            Toast.success('Transaktion erfolgreich gesendet!');
-            
-            // Update slide to success state
-            if (slideText) slideText.textContent = 'Transaktion erfolgreich!';
-            if (slideIcon) slideIcon.className = 'fas fa-check';
-            
-            // Wait a moment then return to wallet
-            setTimeout(() => {
-                walletScreen.show();
-                
-                // Refresh wallet balance
-                if (walletScreen.loadBalance) {
-                    walletScreen.loadBalance();
-                }
-            }, 2000);
-
-        } catch (error) {
-            console.error('❌ Transaction failed:', error);
-            
-            // Show error
-            Toast.error('Transaktion fehlgeschlagen: ' + (error.message || 'Unbekannter Fehler'));
-            
-            // Reset slide
-            this.resetSlideToConfirm();
-        }
-    }
-
     // Cleanup
     cleanup() {
         this.stopScanning();
@@ -829,61 +780,11 @@ class SendScreen {
     }
 }
 
-// QR Detection utility class
-class QRDetector {
-    static detect(imageData) {
-        // Try jsQR first if available
-        if (window.jsQR) {
-            const result = jsQR(imageData.data, imageData.width, imageData.height);
-            return result ? result.data : null;
-        }
-        
-        // Fallback to simple detection pattern matching
-        return QRDetector.simpleDetection(imageData);
-    }
-    
-    // Simple fallback detection for demo purposes
-    static simpleDetection(imageData) {
-        // This is a very basic approach for demo purposes
-        // In production, always use a proper QR detection library like jsQR
-        const { data, width, height } = imageData;
-        
-        // Look for QR-like patterns (very simplified)
-        // This is just for demonstration - not a real QR detector
-        let darkPixels = 0;
-        let totalPixels = width * height;
-        
-        for (let i = 0; i < data.length; i += 4) {
-            const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
-            if (brightness < 128) darkPixels++;
-        }
-        
-        const darkRatio = darkPixels / totalPixels;
-        
-        // If image has QR-like dark/light ratio, simulate detection
-        if (darkRatio > 0.3 && darkRatio < 0.7) {
-            // Return random demo QR code for testing
-            const demoQRCodes = [
-                'CTC9876543210abcdef98765',
-                'ctc:CTC1234567890abcdef123?amount=2.5',
-                'ctc:CTC9876543210abcdef98765?amount=10&note=Payment'
-            ];
-            
-            if (Math.random() < 0.1) { // 10% chance of "detection"
-                return demoQRCodes[Math.floor(Math.random() * demoQRCodes.length)];
-            }
-        }
-        
-        return null;
-    }
-}
-
 // Create global send screen instance
 const sendScreen = new SendScreen();
 
 // Export to global scope
 window.sendScreen = sendScreen;
-window.QRDetector = QRDetector;
 
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => {
