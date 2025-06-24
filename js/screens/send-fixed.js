@@ -549,73 +549,126 @@ class SendScreen {
         }
     }
 
-    // Start QR scanning - KORRIGIERT: Mit Berechtigungsanfrage
+    // Start QR scanning - KORRIGIERT: Mit funktionierender Kamera-Logik aus Ihrer Datei
     async startQRScanning() {
         const video = DOM.get('qr-video');
+        const canvas = DOM.get('qr-canvas');
         
-        if (!video) {
-            throw new Error('Video element not found');
+        if (!video || !canvas) {
+            throw new Error('Video or canvas element not found');
         }
 
         try {
-            // Prüfe zuerst die Kamera-Verfügbarkeit
-            const capabilities = await window.qrCapabilities || await EnhancedQRUtils.checkCapabilities();
+            // FUNKTIONIERENDE KAMERA-LOGIK AUS IHRER DATEI:
+            this.updateScannerStatus('Requesting camera access...');
             
-            if (!capabilities.camera.available) {
-                throw new Error('Keine Kamera gefunden. Bitte überprüfen Sie Ihr Gerät.');
-            }
-            
-            console.log('📱 Camera capabilities:', capabilities);
-            
-            // Zeige Berechtigungsanfrage falls nötig
-            if (capabilities.permissions === 'prompt') {
-                this.updateScannerStatus('Kamera-Berechtigung wird angefragt...', 'info');
-            }
-            
-            // Verwende globale qrScanner-Instanz aus qr-utils.js
-            await window.qrScanner.initialize(video, (qrData) => {
-                this.handleQRDetection(qrData);
+            // Request camera permission - GENAU WIE IN IHRER FUNKTIONIERENDEN DATEI
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { 
+                    facingMode: 'environment', // Back camera for better QR scanning
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                }
             });
             
-            window.qrScanner.startScanning();
-            this.isScanning = true;
+            this.videoStream = stream;
             
-            this.updateScannerStatus('Scannen...', 'scanning');
+            if (video) {
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    video.play();
+                    this.updateScannerStatus('Camera ready - scanning for QR codes...');
+                    
+                    this.isScanning = true;
+                    
+                    // Start scanning loop
+                    this.scanInterval = setInterval(() => {
+                        this.scanForQRCode(video, canvas);
+                    }, 100);
+                    
+                    console.log('✅ QR Scanner started successfully');
+                };
+            }
             
         } catch (error) {
             console.error('❌ Camera access failed:', error);
-            
-            // Spezifische Fehlermeldungen für bessere UX
-            let errorMessage = 'Kamera konnte nicht gestartet werden';
-            
-            if (error.message.includes('Berechtigung')) {
-                errorMessage = 'Kamera-Zugriff verweigert. Bitte erlauben Sie den Zugriff in den Browser-Einstellungen.';
-            } else if (error.message.includes('gefunden')) {
-                errorMessage = 'Keine Kamera gefunden. Bitte überprüfen Sie Ihr Gerät.';
-            } else if (error.message.includes('verwendet')) {
-                errorMessage = 'Kamera wird bereits verwendet. Bitte schließen Sie andere Anwendungen.';
-            }
-            
-            this.updateScannerStatus(errorMessage, 'error');
-            
-            // Zeige hilfreiche Schaltfläche
-            setTimeout(() => {
-                const statusEl = DOM.get('scanner-status');
-                if (statusEl) {
-                    statusEl.innerHTML = `
-                        <div class="status-icon">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
-                        <div class="status-text">${errorMessage}</div>
-                        <button class="btn-secondary" onclick="sendScreen.showManualInput()" style="margin-top: var(--space-3);">
-                            <i class="fas fa-keyboard"></i>
-                            Adresse manuell eingeben
-                        </button>
-                    `;
-                }
-            }, 1000);
-            
+            // FUNKTIONIERENDE ERROR-BEHANDLUNG AUS IHRER DATEI:
+            this.showCameraError(this.getCameraErrorMessage(error));
             throw error;
+        }
+    }
+
+    // HINZUGEFÜGT: Funktionierende Hilfsmethoden aus Ihrer Datei
+    updateScannerStatus(message) {
+        const statusElement = DOM.get('scanner-status');
+        if (statusElement) {
+            const textElement = statusElement.querySelector('.status-text');
+            if (textElement) {
+                textElement.textContent = message;
+            }
+        }
+    }
+
+    showCameraError(message) {
+        this.updateScannerStatus('Camera error: ' + message);
+        // Zeige Fallback-Option
+        setTimeout(() => {
+            const statusEl = DOM.get('scanner-status');
+            if (statusEl) {
+                statusEl.innerHTML = `
+                    <div class="status-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="status-text">${message}</div>
+                    <button class="btn-secondary" onclick="sendScreen.showManualInput()" style="margin-top: var(--space-3);">
+                        <i class="fas fa-keyboard"></i>
+                        Adresse manuell eingeben
+                    </button>
+                `;
+            }
+        }, 1000);
+    }
+
+    getCameraErrorMessage(error) {
+        switch (error.name) {
+            case 'NotAllowedError':
+                return 'Camera access denied. Please allow camera access and try again.';
+            case 'NotFoundError':
+                return 'No camera found on this device.';
+            case 'NotSupportedError':
+                return 'Camera not supported in this browser.';
+            case 'NotReadableError':
+                return 'Camera is being used by another application.';
+            case 'OverconstrainedError':
+                return 'Camera does not meet the required specifications.';
+            default:
+                return 'Failed to access camera. Please try again.';
+        }
+    }
+
+    // Scan for QR code - BEHALTEN: Verwendet die korrigierte QR-Detection
+    scanForQRCode(video, canvas) {
+        if (!this.isScanning || video.readyState !== video.HAVE_ENOUGH_DATA) {
+            return;
+        }
+
+        const ctx = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        
+        try {
+            // KORRIGIERT: Verwende verbesserte QR-Detection
+            const qrResult = QRDetector.detectQRCode(imageData);
+            
+            if (qrResult) {
+                this.handleQRDetection(qrResult);
+            }
+        } catch (error) {
+            console.warn('QR detection error:', error);
         }
     }
 
