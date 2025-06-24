@@ -158,50 +158,25 @@ class CTCQRGenerator {
 
             if (parts[1]) {
                 const params = new URLSearchParams(parts[1]);
-                if (params.has('amount')) {
-                    const amount = parseFloat(params.get('amount'));
-                    if (!isNaN(amount) && amount > 0) {
-                        result.amount = amount;
+                const amount = params.get('amount');
+                const note = params.get('note');
+
+                if (amount) {
+                    const numAmount = parseFloat(amount);
+                    if (!isNaN(numAmount) && numAmount > 0) {
+                        result.amount = numAmount;
                     }
                 }
-                if (params.has('note')) {
-                    result.note = decodeURIComponent(params.get('note'));
+
+                if (note) {
+                    result.note = decodeURIComponent(note);
                 }
             }
 
             return result;
+
         } catch (error) {
             console.error('Error parsing payment URI:', error);
-            return null;
-        }
-    }
-
-    // Generate multiple QR code sizes
-    async generateMultipleSizes(address) {
-        const sizes = [128, 256, 512];
-        const results = {};
-        
-        try {
-            for (const size of sizes) {
-                // Create temporary canvas
-                const canvas = document.createElement('canvas');
-                canvas.id = `temp-qr-${size}-${Date.now()}`;
-                document.body.appendChild(canvas);
-                
-                const success = this.generateAddressQR(address, canvas.id, size);
-                
-                if (success) {
-                    results[size] = canvas.toDataURL('image/png');
-                }
-                
-                // Clean up
-                document.body.removeChild(canvas);
-            }
-            
-            return results;
-            
-        } catch (error) {
-            console.error('Error generating multiple QR sizes:', error);
             return {};
         }
     }
@@ -253,32 +228,50 @@ class CTCQRGenerator {
     }
 }
 
-// Enhanced QR Scanner with jsQR integration
+// Enhanced QR Scanner with jsQR integration - KORRIGIERT
 class CTCQRScanner {
     constructor() {
         this.isScanning = false;
         this.videoStream = null;
         this.scanInterval = null;
         this.onDetectCallback = null;
-        this.scanRate = 250; // Scan every 250ms
+        this.scanRate = 200; // Optimierte Scan-Rate: 200ms
+        this.currentFacingMode = 'environment';
+        this.videoElement = null;
     }
 
-    // Initialize scanner with video element
+    // Initialize scanner with video element - KORRIGIERT MIT PERMISSION CHECK
     async initialize(videoElement, onDetect) {
         this.videoElement = videoElement;
         this.onDetectCallback = onDetect;
         
         try {
-            // Request camera access
+            // Kamera-Berechtigung prüfen
+            const permissionStatus = await CTCQRScanner.checkCameraPermissions();
+            console.log('📷 Camera permission status:', permissionStatus);
+            
+            if (permissionStatus === 'denied') {
+                throw new Error('Kamera-Berechtigung wurde verweigert. Bitte in den Browser-Einstellungen erlauben.');
+            }
+
+            // Request camera access mit verbesserter Konfiguration
             this.videoStream = await navigator.mediaDevices.getUserMedia({
                 video: { 
-                    facingMode: 'environment',
-                    width: { ideal: 640 },
-                    height: { ideal: 480 }
+                    facingMode: this.currentFacingMode,
+                    width: { ideal: 1280, min: 640 },
+                    height: { ideal: 720, min: 480 }
                 }
             });
             
             this.videoElement.srcObject = this.videoStream;
+            
+            // Warten bis Video bereit ist
+            await new Promise((resolve, reject) => {
+                this.videoElement.onloadedmetadata = resolve;
+                this.videoElement.onerror = reject;
+                setTimeout(() => reject(new Error('Video load timeout')), 5000);
+            });
+            
             await this.videoElement.play();
             
             console.log('✅ QR Scanner initialized');
@@ -286,13 +279,27 @@ class CTCQRScanner {
             
         } catch (error) {
             console.error('❌ Scanner initialization failed:', error);
-            throw error;
+            await this.cleanup();
+            
+            // Spezifische Fehlermeldungen
+            if (error.name === 'NotAllowedError') {
+                throw new Error('Kamera-Zugriff wurde verweigert. Bitte erlauben Sie den Zugriff und versuchen Sie es erneut.');
+            } else if (error.name === 'NotFoundError') {
+                throw new Error('Keine Kamera gefunden. Bitte überprüfen Sie Ihr Gerät.');
+            } else if (error.name === 'NotReadableError') {
+                throw new Error('Kamera wird bereits von einer anderen Anwendung verwendet.');
+            } else {
+                throw error;
+            }
         }
     }
 
-    // Start scanning for QR codes
+    // Start scanning for QR codes - KORRIGIERT
     startScanning() {
-        if (this.isScanning) return;
+        if (this.isScanning || !this.videoElement) {
+            console.warn('Scanner bereits aktiv oder nicht initialisiert');
+            return;
+        }
         
         this.isScanning = true;
         this.scanInterval = setInterval(() => {
@@ -302,7 +309,7 @@ class CTCQRScanner {
         console.log('🔍 QR scanning started');
     }
 
-    // Stop scanning
+    // Stop scanning - KORRIGIERT
     stopScanning() {
         this.isScanning = false;
         
@@ -311,17 +318,17 @@ class CTCQRScanner {
             this.scanInterval = null;
         }
         
-        if (this.videoStream) {
-            this.videoStream.getTracks().forEach(track => track.stop());
-            this.videoStream = null;
-        }
-        
         console.log('⏹️ QR scanning stopped');
     }
 
-    // Scan current video frame for QR codes
+    // Scan current video frame for QR codes - VOLLSTÄNDIG KORRIGIERT
     scanFrame() {
         if (!this.videoElement || !this.isScanning) return;
+        
+        // Video-Readiness prüfen
+        if (this.videoElement.readyState !== this.videoElement.HAVE_ENOUGH_DATA) {
+            return;
+        }
         
         try {
             // Create canvas to capture frame
@@ -331,7 +338,11 @@ class CTCQRScanner {
             canvas.width = this.videoElement.videoWidth;
             canvas.height = this.videoElement.videoHeight;
             
-            if (canvas.width === 0 || canvas.height === 0) return;
+            // Dimensionen validieren
+            if (canvas.width === 0 || canvas.height === 0) {
+                console.warn('Video-Dimensionen noch nicht verfügbar');
+                return;
+            }
             
             // Draw current video frame
             ctx.drawImage(this.videoElement, 0, 0, canvas.width, canvas.height);
@@ -339,11 +350,17 @@ class CTCQRScanner {
             // Get image data
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             
-            // Detect QR code
+            // Detect QR code - KORRIGIERT
             const qrData = this.detectQR(imageData);
             
             if (qrData && this.onDetectCallback) {
                 this.stopScanning();
+                
+                // Haptisches Feedback
+                if (navigator.vibrate) {
+                    navigator.vibrate([100, 50, 100]);
+                }
+                
                 this.onDetectCallback(qrData);
             }
             
@@ -352,22 +369,24 @@ class CTCQRScanner {
         }
     }
 
-    // Detect QR code in image data
+    // Detect QR code in image data - KORRIGIERT UND ROBUST
     detectQR(imageData) {
-        // Use jsQR if available
+        // Primär: jsQR verwenden
         if (typeof jsQR !== 'undefined') {
             try {
                 const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                    inversionAttempts: "dontInvert",
+                    inversionAttempts: "dontInvert"
                 });
                 
-                if (code) {
+                if (code && code.data) {
                     console.log('🎯 QR Code detected:', code.data);
                     return code.data;
                 }
             } catch (error) {
                 console.error('jsQR detection error:', error);
             }
+        } else {
+            console.warn('⚠️ jsQR library not available');
         }
         
         return null;
@@ -386,8 +405,8 @@ class CTCQRScanner {
             this.videoStream = await navigator.mediaDevices.getUserMedia({
                 video: { 
                     facingMode: facingMode,
-                    width: { ideal: 640 },
-                    height: { ideal: 480 }
+                    width: { ideal: 1280, min: 640 },
+                    height: { ideal: 720, min: 480 }
                 }
             });
             
@@ -412,22 +431,39 @@ class CTCQRScanner {
                 
                 if (capabilities.torch) {
                     const settings = track.getSettings();
+                    const newTorchState = !settings.torch;
+                    
                     await track.applyConstraints({
-                        advanced: [{ torch: !settings.torch }]
+                        advanced: [{ torch: newTorchState }]
                     });
                     
-                    console.log('🔦 Flashlight toggled:', !settings.torch);
-                    return !settings.torch;
+                    console.log('🔦 Flashlight:', newTorchState ? 'on' : 'off');
+                    return newTorchState;
+                } else {
+                    throw new Error('Flashlight not supported');
                 }
             }
-            return false;
         } catch (error) {
             console.error('Flashlight toggle failed:', error);
             throw error;
         }
     }
 
-    // Check camera availability
+    // Check camera permissions - KORRIGIERT
+    async checkCameraPermissions() {
+        try {
+            if (navigator.permissions) {
+                const permission = await navigator.permissions.query({ name: 'camera' });
+                return permission.state === 'granted';
+            }
+            return true; // Fallback für Browser ohne Permissions API
+        } catch (error) {
+            console.warn('Permission check failed:', error);
+            return true; // Optimistischer Fallback
+        }
+    }
+
+    // Check camera availability - STATISCHE METHODE
     static async checkCameraAvailability() {
         try {
             const devices = await navigator.mediaDevices.enumerateDevices();
@@ -443,24 +479,47 @@ class CTCQRScanner {
         }
     }
 
-    // Check camera permissions
+    // Check camera permissions - STATISCHE METHODE  
     static async checkCameraPermissions() {
         try {
-            const result = await navigator.permissions.query({ name: 'camera' });
-            return result.state; // 'granted', 'denied', or 'prompt'
+            if (navigator.permissions) {
+                const result = await navigator.permissions.query({ name: 'camera' });
+                return result.state; // 'granted', 'denied', or 'prompt'
+            }
+            return 'unknown';
         } catch (error) {
             console.error('Permission check failed:', error);
             return 'unknown';
         }
     }
 
-    // Get camera capabilities
-    getCameraCapabilities() {
-        if (this.videoStream) {
-            const track = this.videoStream.getVideoTracks()[0];
-            return track.getCapabilities ? track.getCapabilities() : {};
+    // Check camera availability - NEU
+    static async checkCameraAvailability() {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            return videoDevices.length > 0;
+        } catch (error) {
+            console.error('Camera availability check failed:', error);
+            return false;
         }
-        return {};
+    }
+
+    // Vollständige Bereinigung - NEU
+    async cleanup() {
+        this.stopScanning();
+        
+        if (this.videoStream) {
+            this.videoStream.getTracks().forEach(track => track.stop());
+            this.videoStream = null;
+        }
+        
+        if (this.videoElement) {
+            this.videoElement.srcObject = null;
+        }
+        
+        this.onDetectCallback = null;
+        console.log('🧹 QR Scanner cleaned up');
     }
 
     // Set scan rate (how often to check for QR codes)
@@ -474,9 +533,9 @@ class CTCQRScanner {
     }
 }
 
-// QR Code Validator
+// QR Code Validator - KORRIGIERT
 class QRValidator {
-    // Validate CTC-specific QR codes
+    // Validate CTC-specific QR codes - KORRIGIERT
     static validateCTCQR(qrData) {
         if (!qrData || typeof qrData !== 'string') {
             return { valid: false, error: 'Invalid QR data' };
@@ -494,8 +553,8 @@ class QRValidator {
         // Check for CTC payment URI
         if (qrData.startsWith('ctc:')) {
             try {
-                const parsed = window.qrGenerator.parsePaymentURI(qrData);
-                if (parsed) {
+                const parsed = new CTCQRGenerator().parsePaymentURI(qrData);
+                if (parsed && parsed.address) {
                     return {
                         valid: true,
                         type: 'payment',
@@ -707,17 +766,27 @@ class EnhancedQRUtils {
         this.history.clearHistory();
     }
 
-    // Check camera capabilities
+    // Check camera capabilities - KORRIGIERT
     static async checkCapabilities() {
-        const camera = await CTCQRScanner.checkCameraAvailability();
-        const permissions = await CTCQRScanner.checkCameraPermissions();
-        
-        return {
-            camera,
-            permissions,
-            jsQR: typeof jsQR !== 'undefined',
-            qrious: typeof QRious !== 'undefined'
-        };
+        try {
+            const cameraInfo = await CTCQRScanner.checkCameraAvailability();
+            const permissionStatus = await CTCQRScanner.checkCameraPermissions();
+            
+            return {
+                camera: cameraInfo,
+                permissions: permissionStatus,
+                jsQR: typeof jsQR !== 'undefined',
+                qrious: typeof QRious !== 'undefined'
+            };
+        } catch (error) {
+            console.error('Capability check failed:', error);
+            return {
+                camera: { available: false, count: 0, devices: [] },
+                permissions: 'unknown',
+                jsQR: typeof jsQR !== 'undefined',
+                qrious: typeof QRious !== 'undefined'
+            };
+        }
     }
 }
 
