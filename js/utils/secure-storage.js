@@ -1,321 +1,431 @@
-// js/utils/secure-storage.js - Sichere Offline-Speicherung für CTC Wallet
+// js/utils/secure-storage.js - FIXED Secure Storage mit Wallet Persistierung
 
-// AES-GCM Verschlüsselung für sicheren lokalen Speicher
-class SecureStorage {
-    static WALLET_PREFIX = 'ctc-wallet-secure-';
-    static SALT_KEY = 'ctc-salt';
-    static VERSION = '1.0';
-
-    // Generiere sicheren Salt oder lade existierenden
-    static async getSalt() {
-        let salt = localStorage.getItem(this.SALT_KEY);
-        if (!salt) {
-            const saltArray = crypto.getRandomValues(new Uint8Array(32));
-            salt = Array.from(saltArray, byte => byte.toString(16).padStart(2, '0')).join('');
-            localStorage.setItem(this.SALT_KEY, salt);
-        }
-        return this.hexToUint8Array(salt);
-    }
-
-    // Konvertiere Hex zu Uint8Array
-    static hexToUint8Array(hex) {
-        const bytes = new Uint8Array(hex.length / 2);
-        for (let i = 0; i < hex.length; i += 2) {
-            bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
-        }
-        return bytes;
-    }
-
-    // Konvertiere Uint8Array zu Hex
-    static uint8ArrayToHex(array) {
-        return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-    }
-
-    // Generiere Schlüssel aus Passwort mit PBKDF2
-    static async deriveKey(password, salt) {
-        const encoder = new TextEncoder();
-        const passwordBuffer = encoder.encode(password);
-        
-        const keyMaterial = await crypto.subtle.importKey(
-            'raw',
-            passwordBuffer,
-            { name: 'PBKDF2' },
-            false,
-            ['deriveKey']
-        );
-
-        return await crypto.subtle.deriveKey(
-            {
-                name: 'PBKDF2',
-                salt: salt,
-                iterations: 100000, // Sicherheitsstandard
-                hash: 'SHA-256'
-            },
-            keyMaterial,
-            { name: 'AES-GCM', length: 256 },
-            false,
-            ['encrypt', 'decrypt']
-        );
-    }
-
-    // Verschlüssele Daten mit AES-GCM
-    static async encrypt(data, password) {
+// Basic Storage Wrapper (umbenennt zu StorageUtil um Konflikt zu vermeiden)
+class StorageUtil {
+    static set(key, value) {
         try {
-            const salt = await this.getSalt();
-            const key = await this.deriveKey(password, salt);
-            
-            const encoder = new TextEncoder();
-            const dataBuffer = encoder.encode(JSON.stringify(data));
-            
-            const iv = crypto.getRandomValues(new Uint8Array(12)); // 96-bit IV für GCM
-            
-            const encryptedBuffer = await crypto.subtle.encrypt(
-                { name: 'AES-GCM', iv: iv },
-                key,
-                dataBuffer
-            );
-
-            return {
-                encrypted: this.uint8ArrayToHex(new Uint8Array(encryptedBuffer)),
-                iv: this.uint8ArrayToHex(iv),
-                version: this.VERSION
-            };
+            localStorage.setItem(key, JSON.stringify(value));
+            return true;
         } catch (error) {
-            console.error('Encryption error:', error);
-            throw new Error('Failed to encrypt wallet data');
+            console.error('Storage set error:', error);
+            return false;
         }
     }
-
-    // Entschlüssele Daten mit AES-GCM
-    static async decrypt(encryptedData, password) {
+    
+    static get(key, defaultValue = null) {
         try {
-            const salt = await this.getSalt();
-            const key = await this.deriveKey(password, salt);
-            
-            const encryptedBuffer = this.hexToUint8Array(encryptedData.encrypted);
-            const iv = this.hexToUint8Array(encryptedData.iv);
-            
-            const decryptedBuffer = await crypto.subtle.decrypt(
-                { name: 'AES-GCM', iv: iv },
-                key,
-                encryptedBuffer
-            );
-
-            const decoder = new TextDecoder();
-            const decryptedString = decoder.decode(decryptedBuffer);
-            
-            return JSON.parse(decryptedString);
+            const item = localStorage.getItem(key);
+            return item ? JSON.parse(item) : defaultValue;
         } catch (error) {
-            console.error('Decryption error:', error);
-            throw new Error('Invalid password or corrupted wallet data');
+            console.error('Storage get error:', error);
+            return defaultValue;
+        }
+    }
+    
+    static remove(key) {
+        try {
+            localStorage.removeItem(key);
+            return true;
+        } catch (error) {
+            console.error('Storage remove error:', error);
+            return false;
+        }
+    }
+    
+    static clear() {
+        try {
+            localStorage.clear();
+            return true;
+        } catch (error) {
+            console.error('Storage clear error:', error);
+            return false;
         }
     }
 }
 
-// Sichere Wallet-Speicher-Klasse
-class SecureWalletStorage {
-    static ACCOUNTS_KEY = 'ctc-accounts-list';
-    static ACTIVE_ACCOUNT_KEY = 'ctc-active-account';
-    static SESSION_KEY = 'ctc-session';
-    static MAX_FAILED_ATTEMPTS = 5;
-    static LOCKOUT_TIME = 30 * 60 * 1000; // 30 Minuten
-
-    // Speichere verschlüsseltes Wallet
-    static async saveWallet(walletData, password, accountName = 'Main Account') {
+// Simple encryption/decryption using built-in crypto
+class SimpleEncryption {
+    static async encrypt(data, password) {
         try {
-            // Validiere Eingaben
-            if (!walletData || !walletData.mnemonic || !password) {
-                throw new Error('Invalid wallet data or password');
-            }
+            const encoder = new TextEncoder();
+            const passwordKey = await crypto.subtle.importKey(
+                'raw',
+                encoder.encode(password),
+                { name: 'PBKDF2' },
+                false,
+                ['deriveKey']
+            );
+            
+            const salt = crypto.getRandomValues(new Uint8Array(16));
+            const key = await crypto.subtle.deriveKey(
+                {
+                    name: 'PBKDF2',
+                    salt: salt,
+                    iterations: 100000,
+                    hash: 'SHA-256'
+                },
+                passwordKey,
+                { name: 'AES-GCM', length: 256 },
+                false,
+                ['encrypt']
+            );
+            
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            const encodedData = encoder.encode(JSON.stringify(data));
+            
+            const encrypted = await crypto.subtle.encrypt(
+                { name: 'AES-GCM', iv: iv },
+                key,
+                encodedData
+            );
+            
+            // Combine salt, iv, and encrypted data
+            const result = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
+            result.set(salt, 0);
+            result.set(iv, salt.length);
+            result.set(new Uint8Array(encrypted), salt.length + iv.length);
+            
+            return Array.from(result);
+            
+        } catch (error) {
+            console.error('Encryption failed:', error);
+            throw error;
+        }
+    }
+    
+    static async decrypt(encryptedArray, password) {
+        try {
+            const data = new Uint8Array(encryptedArray);
+            const salt = data.slice(0, 16);
+            const iv = data.slice(16, 28);
+            const encrypted = data.slice(28);
+            
+            const encoder = new TextEncoder();
+            const decoder = new TextDecoder();
+            
+            const passwordKey = await crypto.subtle.importKey(
+                'raw',
+                encoder.encode(password),
+                { name: 'PBKDF2' },
+                false,
+                ['deriveKey']
+            );
+            
+            const key = await crypto.subtle.deriveKey(
+                {
+                    name: 'PBKDF2',
+                    salt: salt,
+                    iterations: 100000,
+                    hash: 'SHA-256'
+                },
+                passwordKey,
+                { name: 'AES-GCM', length: 256 },
+                false,
+                ['decrypt']
+            );
+            
+            const decrypted = await crypto.subtle.decrypt(
+                { name: 'AES-GCM', iv: iv },
+                key,
+                encrypted
+            );
+            
+            const decryptedText = decoder.decode(decrypted);
+            return JSON.parse(decryptedText);
+            
+        } catch (error) {
+            console.error('Decryption failed:', error);
+            throw error;
+        }
+    }
+}
 
-            if (password.length < 8) {
-                throw new Error('Password must be at least 8 characters');
+// Secure Wallet Storage
+class SecureWalletStorage {
+    static WALLET_KEY = 'ctc-wallet-encrypted';
+    static SESSION_KEY = 'ctc-session-token';
+    static ACCOUNTS_KEY = 'ctc-accounts-encrypted';
+    static VERSION_KEY = 'ctc-storage-version';
+    static CURRENT_VERSION = '2.0';
+    
+    // Generate unique account ID
+    static generateAccountId() {
+        return 'acc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+    
+    // Save encrypted wallet data
+    static async saveWallet(wallet, password, accountName = 'My Wallet') {
+        try {
+            if (!wallet || !password) {
+                throw new Error('Wallet and password are required');
             }
-
-            // Bereite Wallet-Daten vor
-            const secureData = {
-                mnemonic: walletData.mnemonic,
-                privateKey: walletData.privateKeyHex,
-                publicKey: walletData.publicKeyHex,
-                address: walletData.address,
+            
+            console.log('🔒 Saving wallet securely...');
+            
+            // Generate unique account ID
+            const accountId = this.generateAccountId();
+            
+            // Prepare wallet data for encryption
+            const walletData = {
+                mnemonic: wallet.getMnemonic(),
+                privateKey: wallet.privateKey,
+                publicKey: wallet.publicKeyHex,
+                address: wallet.address,
                 createdAt: Date.now(),
-                version: SecureStorage.VERSION
+                version: this.CURRENT_VERSION
             };
-
-            // Verschlüssele Wallet-Daten
-            const encryptedWallet = await SecureStorage.encrypt(secureData, password);
             
-            // Generiere Account-ID
-            const accountId = this.generateAccountId(walletData.address);
+            // Encrypt wallet data
+            const encryptedData = await SimpleEncryption.encrypt(walletData, password);
             
-            // Speichere verschlüsseltes Wallet
-            const walletKey = SecureStorage.WALLET_PREFIX + accountId;
-            localStorage.setItem(walletKey, JSON.stringify(encryptedWallet));
-
-            // Aktualisiere Account-Liste (nur öffentliche Daten)
-            await this.updateAccountsList(accountId, accountName, walletData.address);
+            // Create account record
+            const accountRecord = {
+                id: accountId,
+                name: accountName,
+                address: wallet.address,
+                createdAt: Date.now(),
+                version: this.CURRENT_VERSION
+            };
             
-            // Setze als aktiven Account
-            localStorage.setItem(this.ACTIVE_ACCOUNT_KEY, accountId);
-
-            console.log('🔒 Wallet successfully saved with encryption');
+            // Store encrypted wallet data
+            const walletStorageKey = `${this.WALLET_KEY}-${accountId}`;
+            const success = StorageUtil.set(walletStorageKey, {
+                data: encryptedData,
+                version: this.CURRENT_VERSION,
+                timestamp: Date.now(),
+                address: wallet.address // Safe to store - not sensitive
+            });
+            
+            if (!success) {
+                throw new Error('Failed to save wallet data');
+            }
+            
+            // Add to accounts list
+            this.addAccount(accountRecord);
+            
+            // Set storage version
+            StorageUtil.set(this.VERSION_KEY, this.CURRENT_VERSION);
+            
+            console.log('🔒 Wallet saved securely with ID:', accountId);
             return accountId;
             
         } catch (error) {
             console.error('❌ Error saving wallet:', error);
-            throw error;
+            throw new Error('Failed to save wallet securely: ' + error.message);
         }
     }
-
-    // Lade und entschlüssele Wallet
+    
+    // Load and decrypt wallet data
     static async loadWallet(accountId, password) {
         try {
-            // Prüfe Fehlversuche
-            if (this.isAccountLocked(accountId)) {
-                throw new Error('Account temporarily locked due to failed attempts');
+            if (!accountId || !password) {
+                throw new Error('Account ID and password are required');
             }
-
-            const walletKey = SecureStorage.WALLET_PREFIX + accountId;
-            const encryptedData = localStorage.getItem(walletKey);
             
-            if (!encryptedData) {
+            console.log('🔓 Loading wallet for account:', accountId);
+            
+            // Get encrypted data from storage
+            const walletStorageKey = `${this.WALLET_KEY}-${accountId}`;
+            const storedData = StorageUtil.get(walletStorageKey);
+            
+            if (!storedData || !storedData.data) {
                 throw new Error('Wallet not found');
             }
-
-            const encryptedWallet = JSON.parse(encryptedData);
             
-            // Entschlüssele Wallet-Daten
-            const walletData = await SecureStorage.decrypt(encryptedWallet, password);
+            // Decrypt wallet data
+            const decryptedData = await SimpleEncryption.decrypt(storedData.data, password);
             
-            // Validiere entschlüsselte Daten
-            if (!walletData.mnemonic || !walletData.address) {
-                throw new Error('Invalid wallet data structure');
-            }
-
-            // Lösche Fehlversuche bei erfolgreichem Login
-            this.clearFailedAttempts(accountId);
+            // Restore wallet from mnemonic using the static method
+            const wallet = await CTCWallet.restore(decryptedData.mnemonic);
             
-            // Erstelle Session-Token
-            this.createSession(accountId);
-
-            console.log('🔓 Wallet successfully loaded and decrypted');
-            return walletData;
+            console.log('🔓 Wallet loaded securely for account:', accountId);
+            return {
+                wallet: wallet,
+                mnemonic: decryptedData.mnemonic,
+                address: decryptedData.address,
+                publicKey: decryptedData.publicKey
+            };
             
         } catch (error) {
             console.error('❌ Error loading wallet:', error);
-            
-            // Zähle Fehlversuche
-            if (error.message.includes('Invalid password')) {
-                this.recordFailedAttempt(accountId);
-            }
-            
-            throw error;
+            throw new Error('Failed to load wallet: ' + error.message);
         }
     }
-
-    // Prüfe ob Wallet existiert
-    static hasWallet(accountId = null) {
-        if (accountId) {
-            const walletKey = SecureStorage.WALLET_PREFIX + accountId;
-            return localStorage.getItem(walletKey) !== null;
-        }
-        
-        // Prüfe für beliebige Wallets
+    
+    // Check if any wallets exist
+    static hasWallet() {
         const accounts = this.getAccountsList();
         return accounts.length > 0;
     }
-
-    // Lösche Wallet permanent
-    static deleteWallet(accountId) {
+    
+    // Get wallet address without decryption
+    static getWalletAddress(accountId) {
+        const walletStorageKey = `${this.WALLET_KEY}-${accountId}`;
+        const storedData = StorageUtil.get(walletStorageKey);
+        return storedData ? storedData.address : null;
+    }
+    
+    // Account Management
+    static getAccountsList() {
         try {
-            const walletKey = SecureStorage.WALLET_PREFIX + accountId;
-            localStorage.removeItem(walletKey);
-            
-            // Entferne aus Account-Liste
+            const accounts = StorageUtil.get(this.ACCOUNTS_KEY, []);
+            return Array.isArray(accounts) ? accounts : [];
+        } catch (error) {
+            console.error('Error getting accounts list:', error);
+            return [];
+        }
+    }
+    
+    static addAccount(accountRecord) {
+        try {
             const accounts = this.getAccountsList();
-            const updatedAccounts = accounts.filter(acc => acc.id !== accountId);
-            localStorage.setItem(this.ACCOUNTS_KEY, JSON.stringify(updatedAccounts));
             
-            // Lösche Session falls das der aktive Account war
-            const activeAccount = localStorage.getItem(this.ACTIVE_ACCOUNT_KEY);
-            if (activeAccount === accountId) {
-                localStorage.removeItem(this.ACTIVE_ACCOUNT_KEY);
-                localStorage.removeItem(this.SESSION_KEY);
+            // Check if account already exists
+            const existingIndex = accounts.findIndex(acc => acc.id === accountRecord.id);
+            if (existingIndex >= 0) {
+                accounts[existingIndex] = accountRecord;
+            } else {
+                accounts.push(accountRecord);
             }
             
-            console.log('🗑️ Wallet deleted permanently');
-            return true;
+            StorageUtil.set(this.ACCOUNTS_KEY, accounts);
+            console.log('📝 Account added to list:', accountRecord.name);
             
+        } catch (error) {
+            console.error('Error adding account:', error);
+            throw error;
+        }
+    }
+    
+    static removeAccount(accountId) {
+        try {
+            const accounts = this.getAccountsList();
+            const filtered = accounts.filter(acc => acc.id !== accountId);
+            StorageUtil.set(this.ACCOUNTS_KEY, filtered);
+            console.log('🗑️ Account removed from list:', accountId);
+        } catch (error) {
+            console.error('Error removing account:', error);
+        }
+    }
+    
+    // Delete specific wallet data
+    static deleteWallet(accountId) {
+        try {
+            // Remove wallet data
+            const walletStorageKey = `${this.WALLET_KEY}-${accountId}`;
+            StorageUtil.remove(walletStorageKey);
+            
+            // Remove from accounts list
+            this.removeAccount(accountId);
+            
+            // Clear session if it was for this account
+            const sessionData = StorageUtil.get(this.SESSION_KEY);
+            if (sessionData && sessionData.accountId === accountId) {
+                StorageUtil.remove(this.SESSION_KEY);
+            }
+            
+            console.log('🗑️ Wallet deleted:', accountId);
+            return true;
         } catch (error) {
             console.error('❌ Error deleting wallet:', error);
             return false;
         }
     }
-
-    // Account-Management
-    static updateAccountsList(accountId, name, address) {
-        const accounts = this.getAccountsList();
-        const existingIndex = accounts.findIndex(acc => acc.id === accountId);
+    
+    // Delete all wallet data permanently
+    static deleteAllWallets() {
+        try {
+            // Get all accounts
+            const accounts = this.getAccountsList();
+            
+            // Delete each wallet
+            accounts.forEach(account => {
+                this.deleteWallet(account.id);
+            });
+            
+            // Clear accounts list
+            StorageUtil.remove(this.ACCOUNTS_KEY);
+            StorageUtil.remove(this.SESSION_KEY);
+            StorageUtil.remove(this.VERSION_KEY);
+            
+            // Clean up any other wallet-related data
+            const keys = Object.keys(localStorage);
+            keys.forEach(key => {
+                if (key.startsWith('ctc-') || key.startsWith('wallet-')) {
+                    localStorage.removeItem(key);
+                }
+            });
+            
+            console.log('🗑️ All wallet data deleted permanently');
+            return true;
+        } catch (error) {
+            console.error('❌ Error deleting all wallets:', error);
+            return false;
+        }
+    }
+    
+    // Session Management
+    static generateSessionToken(accountId) {
+        const token = crypto.getRandomValues(new Uint8Array(32));
+        const tokenHex = Array.from(token, byte => byte.toString(16).padStart(2, '0')).join('');
         
-        const accountData = {
-            id: accountId,
-            name: name,
-            address: address,
-            createdAt: Date.now()
-        };
+        StorageUtil.set(this.SESSION_KEY, {
+            token: tokenHex,
+            accountId: accountId,
+            created: Date.now(),
+            expires: Date.now() + (15 * 60 * 1000) // 15 minutes
+        });
         
-        if (existingIndex >= 0) {
-            accounts[existingIndex] = accountData;
-        } else {
-            accounts.push(accountData);
+        return tokenHex;
+    }
+    
+    static validateSessionToken(token, accountId = null) {
+        const sessionData = StorageUtil.get(this.SESSION_KEY);
+        
+        if (!sessionData) return false;
+        if (sessionData.token !== token) return false;
+        if (accountId && sessionData.accountId !== accountId) return false;
+        if (Date.now() > sessionData.expires) {
+            StorageUtil.remove(this.SESSION_KEY);
+            return false;
         }
         
-        localStorage.setItem(this.ACCOUNTS_KEY, JSON.stringify(accounts));
-    }
-
-    static getAccountsList() {
-        const accountsData = localStorage.getItem(this.ACCOUNTS_KEY);
-        return accountsData ? JSON.parse(accountsData) : [];
-    }
-
-    static generateAccountId(address) {
-        // Erstelle eindeutige ID aus Adresse
-        return address.substring(3, 13); // CTC + erste 10 Zeichen
-    }
-
-    // Session-Management
-    static createSession(accountId) {
-        const sessionData = {
-            accountId: accountId,
-            createdAt: Date.now(),
-            expiresAt: Date.now() + (15 * 60 * 1000) // 15 Minuten
-        };
-        localStorage.setItem(this.SESSION_KEY, JSON.stringify(sessionData));
-    }
-
-    static isSessionValid() {
-        const sessionData = localStorage.getItem(this.SESSION_KEY);
-        if (!sessionData) return false;
-        
-        const session = JSON.parse(sessionData);
-        return Date.now() < session.expiresAt;
-    }
-
-    static extendSession() {
-        const sessionData = localStorage.getItem(this.SESSION_KEY);
-        if (!sessionData) return false;
-        
-        const session = JSON.parse(sessionData);
-        session.expiresAt = Date.now() + (15 * 60 * 1000);
-        localStorage.setItem(this.SESSION_KEY, JSON.stringify(session));
         return true;
     }
-
-    static clearSession() {
-        localStorage.removeItem(this.SESSION_KEY);
+    
+    static isSessionValid(accountId = null) {
+        const sessionData = StorageUtil.get(this.SESSION_KEY);
+        
+        if (!sessionData) return false;
+        if (accountId && sessionData.accountId !== accountId) return false;
+        if (Date.now() > sessionData.expires) {
+            StorageUtil.remove(this.SESSION_KEY);
+            return false;
+        }
+        
+        return true;
     }
-
-    // Sicherheits-Features
+    
+    static extendSession(accountId = null) {
+        const sessionData = StorageUtil.get(this.SESSION_KEY);
+        
+        if (sessionData && (!accountId || sessionData.accountId === accountId)) {
+            sessionData.expires = Date.now() + (15 * 60 * 1000); // 15 minutes
+            StorageUtil.set(this.SESSION_KEY, sessionData);
+            return true;
+        }
+        
+        return false;
+    }
+    
+    static clearSession() {
+        StorageUtil.remove(this.SESSION_KEY);
+    }
+    
+    // Account locking for failed attempts
+    static MAX_FAILED_ATTEMPTS = 5;
+    static LOCKOUT_TIME = 15 * 60 * 1000; // 15 minutes
+    
     static recordFailedAttempt(accountId) {
         const key = `failed-attempts-${accountId}`;
         const attempts = JSON.parse(localStorage.getItem(key) || '{"count": 0, "lastAttempt": 0}');
@@ -325,53 +435,184 @@ class SecureWalletStorage {
         
         localStorage.setItem(key, JSON.stringify(attempts));
         
-        if (attempts.count >= this.MAX_FAILED_ATTEMPTS) {
-            console.warn('🚨 Account locked due to failed attempts');
-        }
+        return attempts.count >= this.MAX_FAILED_ATTEMPTS;
     }
-
+    
     static clearFailedAttempts(accountId) {
         const key = `failed-attempts-${accountId}`;
         localStorage.removeItem(key);
     }
-
+    
     static isAccountLocked(accountId) {
         const key = `failed-attempts-${accountId}`;
         const attempts = JSON.parse(localStorage.getItem(key) || '{"count": 0, "lastAttempt": 0}');
         
         if (attempts.count >= this.MAX_FAILED_ATTEMPTS) {
-            const timeSinceLastAttempt = Date.now() - attempts.lastAttempt;
-            if (timeSinceLastAttempt < this.LOCKOUT_TIME) {
+            const timeElapsed = Date.now() - attempts.lastAttempt;
+            if (timeElapsed < this.LOCKOUT_TIME) {
                 return true;
             } else {
-                // Lockout abgelaufen, lösche Fehlversuche
+                // Lockout period expired, clear attempts
                 this.clearFailedAttempts(accountId);
+                return false;
             }
         }
         
         return false;
     }
-
-    // Vollständige Bereinigung (für Reset)
-    static clearAllData() {
+    
+    // Storage cleanup and maintenance
+    static cleanup() {
         try {
-            // Lösche alle Wallet-Daten
+            console.log('🧹 Starting storage cleanup...');
+            
+            const accounts = this.getAccountsList();
+            const validAccountIds = accounts.map(acc => acc.id);
+            
+            // Find orphaned wallet data
+            let removedCount = 0;
             Object.keys(localStorage).forEach(key => {
-                if (key.startsWith('ctc-')) {
-                    localStorage.removeItem(key);
+                if (key.startsWith(this.WALLET_KEY + '-')) {
+                    const accountId = key.replace(this.WALLET_KEY + '-', '');
+                    if (!validAccountIds.includes(accountId)) {
+                        localStorage.removeItem(key);
+                        removedCount++;
+                        console.log(`🗑️ Removed orphaned wallet data: ${key}`);
+                    }
                 }
             });
             
-            console.log('🧹 All wallet data cleared');
+            // Update storage version
+            StorageUtil.set(this.VERSION_KEY, this.CURRENT_VERSION);
+            
+            console.log(`✅ Storage cleanup completed - removed ${removedCount} items`);
             return true;
             
         } catch (error) {
-            console.error('❌ Error clearing data:', error);
+            console.error('❌ Storage cleanup failed:', error);
             return false;
         }
     }
+    
+    // Migration functions
+    static migrateLegacyData() {
+        try {
+            console.log('🔄 Checking for legacy data migration...');
+            
+            // Check for old wallet format
+            const legacyWallet = StorageUtil.get('ctc-wallet');
+            if (legacyWallet) {
+                console.log('📦 Legacy wallet found, migration needed');
+                return true;
+            }
+            
+            return false;
+        } catch (error) {
+            console.error('❌ Migration check failed:', error);
+            return false;
+        }
+    }
+    
+    // Storage statistics
+    static getStorageStats() {
+        try {
+            const accounts = this.getAccountsList();
+            const storageVersion = StorageUtil.get(this.VERSION_KEY, '1.0');
+            
+            let totalSize = 0;
+            let walletCount = 0;
+            
+            accounts.forEach(account => {
+                const walletKey = `${this.WALLET_KEY}-${account.id}`;
+                const walletData = StorageUtil.get(walletKey);
+                if (walletData) {
+                    walletCount++;
+                    totalSize += JSON.stringify(walletData).length;
+                }
+            });
+            
+            return {
+                version: storageVersion,
+                accounts: accounts.length,
+                wallets: walletCount,
+                estimatedSize: totalSize,
+                hasSession: this.isSessionValid(),
+                supportsEncryption: typeof crypto !== 'undefined' && !!crypto.subtle
+            };
+        } catch (error) {
+            console.error('Error getting storage stats:', error);
+            return {
+                version: 'unknown',
+                accounts: 0,
+                wallets: 0,
+                estimatedSize: 0,
+                hasSession: false,
+                supportsEncryption: false
+            };
+        }
+    }
+    
+    // Backup and restore
+    static async createBackup(password) {
+        try {
+            const accounts = this.getAccountsList();
+            const backupData = {
+                version: this.CURRENT_VERSION,
+                timestamp: Date.now(),
+                accounts: accounts.map(acc => ({
+                    id: acc.id,
+                    name: acc.name,
+                    address: acc.address,
+                    createdAt: acc.createdAt
+                }))
+            };
+            
+            // Encrypt backup
+            const encrypted = await SimpleEncryption.encrypt(backupData, password);
+            
+            return {
+                data: encrypted,
+                checksum: await this.calculateChecksum(JSON.stringify(backupData))
+            };
+        } catch (error) {
+            console.error('Error creating backup:', error);
+            throw error;
+        }
+    }
+    
+    static async restoreBackup(encryptedBackup, password) {
+        try {
+            const decrypted = await SimpleEncryption.decrypt(encryptedBackup.data, password);
+            
+            // Validate backup format
+            if (!decrypted.version || !decrypted.accounts) {
+                throw new Error('Invalid backup format');
+            }
+            
+            console.log('✅ Backup restored successfully');
+            return decrypted;
+        } catch (error) {
+            console.error('Error restoring backup:', error);
+            throw error;
+        }
+    }
+    
+    static async calculateChecksum(data) {
+        const encoder = new TextEncoder();
+        const dataBuffer = encoder.encode(data);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
 }
 
-// Export für globale Verwendung
-window.SecureStorage = SecureStorage;
+// Export to global scope (kompatibel mit helpers.js Storage)
 window.SecureWalletStorage = SecureWalletStorage;
+window.SimpleEncryption = SimpleEncryption;
+
+// Für Kompatibilität mit helpers.js - verwende die globale Storage Klasse
+if (!window.Storage) {
+    window.Storage = StorageUtil;
+}
+
+console.log('🔒 SecureWalletStorage loaded successfully');
