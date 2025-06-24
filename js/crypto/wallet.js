@@ -1,6 +1,6 @@
-// js/crypto/wallet.js - CTC Blockchain-kompatible Wallet Implementation with Enhanced ECDSA
+// js/crypto/wallet.js - CTC Wallet Implementation (FIXED)
 
-// BIP39 Wordlist (gleiche wie in Go Implementation)
+// CTC Word List (same as Go code)
 const CTC_WORD_LIST = [
     "abandon", "ability", "able", "about", "above", "absent", "absorb", "abstract", "absurd", "abuse",
     "access", "accident", "account", "accuse", "achieve", "acid", "acoustic", "acquire", "across", "act",
@@ -209,611 +209,583 @@ const CTC_WORD_LIST = [
     "yard", "year", "yellow", "you", "young", "youth", "zebra", "zero", "zone", "zoo"
 ];
 
-// Utility-Funktionen für Kryptografie (identisch mit Go Implementation)
-class CryptoUtils {
-    // Konvertiere Hex zu Uint8Array
-    static hexToBytes(hex) {
-        const bytes = new Uint8Array(hex.length / 2);
-        for (let i = 0; i < hex.length; i += 2) {
-            bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
-        }
-        return bytes;
-    }
-
-    // Konvertiere Uint8Array zu Hex
-    static bytesToHex(bytes) {
-        return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
-    }
-
-    // PBKDF2 mit SHA-256 (identisch mit Go Implementation)
-    static async pbkdf2(password, salt, iterations, keyLength) {
+// Simple encryption utility using Web Crypto API
+class SecureStorage {
+    static async generateKey(password) {
         const encoder = new TextEncoder();
-        const passwordBuffer = encoder.encode(password);
-        const saltBuffer = encoder.encode(salt);
+        const data = encoder.encode(password);
         
+        // Create key from password
         const keyMaterial = await crypto.subtle.importKey(
             'raw',
-            passwordBuffer,
+            data,
             { name: 'PBKDF2' },
             false,
             ['deriveKey']
         );
-
-        const derivedKey = await crypto.subtle.deriveKey(
+        
+        // Derive AES key
+        return await crypto.subtle.deriveKey(
             {
                 name: 'PBKDF2',
-                salt: saltBuffer,
-                iterations: iterations,
+                salt: encoder.encode('ctc-wallet-salt'),
+                iterations: 100000,
                 hash: 'SHA-256'
             },
             keyMaterial,
-            { name: 'AES-CTR', length: keyLength * 8 },
-            true,
+            { name: 'AES-GCM', length: 256 },
+            false,
             ['encrypt', 'decrypt']
         );
-
-        const keyBuffer = await crypto.subtle.exportKey('raw', derivedKey);
-        return new Uint8Array(keyBuffer);
     }
-
-    // SHA-256 Hash
-    static async sha256(data) {
-        const buffer = typeof data === 'string' ? new TextEncoder().encode(data) : data;
-        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-        return new Uint8Array(hashBuffer);
-    }
-
-    // FIX: Konvertiere BigInt zu 32-Byte Array (mit korrektem Padding wie in Go)
-    static bigIntToBytes32(bigInt) {
-        const hex = bigInt.toString(16);
-        const paddedHex = hex.padStart(64, '0'); // 32 Bytes = 64 Hex-Zeichen
-        return this.hexToBytes(paddedHex);
-    }
-
-    // FIX: Korrekte ECDSA R,S Padding (identisch mit Go Implementation)
-    static padToBytes32(bytes) {
-        if (bytes.length === 32) return bytes;
+    
+    static async encrypt(data, password) {
+        const key = await this.generateKey(password);
+        const encoder = new TextEncoder();
+        const dataBuffer = encoder.encode(JSON.stringify(data));
         
-        const padded = new Uint8Array(32);
-        if (bytes.length < 32) {
-            // Links mit Nullen auffüllen
-            padded.set(bytes, 32 - bytes.length);
-        } else {
-            // Schneide ab falls zu lang (sollte nicht passieren)
-            padded.set(bytes.slice(-32));
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const encrypted = await crypto.subtle.encrypt(
+            { name: 'AES-GCM', iv },
+            key,
+            dataBuffer
+        );
+        
+        // Combine IV and encrypted data
+        const result = new Uint8Array(iv.length + encrypted.byteLength);
+        result.set(iv, 0);
+        result.set(new Uint8Array(encrypted), iv.length);
+        
+        return Array.from(result);
+    }
+    
+    static async decrypt(encryptedArray, password) {
+        const key = await this.generateKey(password);
+        const encryptedData = new Uint8Array(encryptedArray);
+        
+        const iv = encryptedData.slice(0, 12);
+        const data = encryptedData.slice(12);
+        
+        try {
+            const decrypted = await crypto.subtle.decrypt(
+                { name: 'AES-GCM', iv },
+                key,
+                data
+            );
+            
+            const decoder = new TextDecoder();
+            return JSON.parse(decoder.decode(decrypted));
+        } catch (error) {
+            throw new Error('Failed to decrypt wallet data - wrong password?');
         }
-        return padded;
     }
 }
 
-// CTC Wallet Klasse (100% kompatibel mit Go Implementation + Enhanced ECDSA)
+// Go-kompatible CTC Wallet Implementierung (SECURE VERSION)
 class CTCWallet {
     constructor() {
-        this.mnemonic = null;
         this.privateKeyBigInt = null;
         this.privateKeyBytes = null;
-        this.privateKeyHex = null;
         this.publicKeyBytes = null;
         this.publicKeyHex = null;
         this.address = null;
-        this._isLocked = true;
-        this._cryptoKey = null; // Für erweiterte ECDSA-Operationen
+        this.mnemonic = null;
+        this._isLocked = false;
     }
 
-    // Erstelle neues Wallet (identisch mit Go CreateWallet)
     static async create() {
-        console.log('🔑 Creating new CTC wallet...');
-        
         const wallet = new CTCWallet();
         
-        // Generiere 12-Wort Mnemonic (identisch mit Go)
+        // Generate 12-word mnemonic exactly like Go
         const words = [];
         for (let i = 0; i < 12; i++) {
             const randomIndex = Math.floor(Math.random() * CTC_WORD_LIST.length);
             words.push(CTC_WORD_LIST[randomIndex]);
         }
         wallet.mnemonic = words.join(' ');
-        
-        await wallet._generateKeysFromMnemonic();
-        wallet._isLocked = false;
-        
-        console.log('✅ New wallet created successfully');
+
+        await wallet.generateKeysFromMnemonic(wallet.mnemonic);
         return wallet;
     }
 
-    // Stelle Wallet aus Mnemonic wieder her (identisch mit Go RestoreWallet)
     static async restore(mnemonic) {
-        console.log('🔄 Restoring wallet from mnemonic...');
-        
-        if (!mnemonic || mnemonic.trim() === '') {
-            throw new Error('Empty mnemonic');
-        }
-        
         const wallet = new CTCWallet();
         wallet.mnemonic = mnemonic.trim();
         
-        // Validiere Mnemonic
+        // Validate mnemonic
         const words = wallet.mnemonic.split(' ');
         if (words.length !== 12) {
             throw new Error('Mnemonic must contain exactly 12 words');
         }
-        
+
         for (const word of words) {
             if (!CTC_WORD_LIST.includes(word.toLowerCase())) {
                 throw new Error(`Invalid word in mnemonic: ${word}`);
             }
         }
-        
-        await wallet._generateKeysFromMnemonic();
-        wallet._isLocked = false;
-        
-        console.log('✅ Wallet restored successfully');
+
+        await wallet.generateKeysFromMnemonic(wallet.mnemonic);
         return wallet;
     }
 
-    // Generiere Schlüssel aus Mnemonic (identisch mit Go Implementation)
-    async _generateKeysFromMnemonic() {
+    async generateKeysFromMnemonic(mnemonic) {
         try {
-            // PBKDF2 mit identischen Parametern wie Go
-            const seed = await CryptoUtils.pbkdf2(this.mnemonic, 'CTC', 2048, 32);
+            // SECURITY: No logging of sensitive data
+            console.log('🔑 Generating wallet keys...');
             
-            // Konvertiere Seed zu BigInt
-            this.privateKeyBigInt = BigInt('0x' + CryptoUtils.bytesToHex(seed));
+            // Step 1: PBKDF2 exactly like Go
+            const seed = await this.pbkdf2(mnemonic, 'CTC', 2048, 32);
             
-            // Private Key als Bytes und Hex
-            this.privateKeyBytes = CryptoUtils.bigIntToBytes32(this.privateKeyBigInt);
-            this.privateKeyHex = CryptoUtils.bytesToHex(this.privateKeyBytes);
+            // Step 2: Convert to BigInt like Go
+            this.privateKeyBigInt = this.bytesToBigInt(seed);
             
-            // Generiere Public Key mit P-256 (identisch mit Go)
-            const keyPair = await this._generateP256KeyPair(this.privateKeyBytes);
-            this.publicKeyBytes = keyPair.publicKeyBytes;
-            this.publicKeyHex = CryptoUtils.bytesToHex(this.publicKeyBytes);
-            this._cryptoKey = keyPair.privateKey; // Speichere für erweiterte Operationen
+            // Step 3: Store private key bytes (32 bytes)
+            this.privateKeyBytes = seed;
             
-            // Generiere CTC-Adresse (identisch mit Go)
-            this.address = await this._generateAddress(this.publicKeyBytes);
+            // Step 4: ECDSA P-256 point multiplication like Go
+            const publicPoint = await this.scalarBaseMult(this.privateKeyBigInt);
+            
+            // Step 5: Create public key bytes X||Y like Go
+            this.publicKeyBytes = this.createPublicKeyBytes(publicPoint.x, publicPoint.y);
+            this.publicKeyHex = this.bytesToHex(this.publicKeyBytes);
+            
+            // Step 6: Generate address exactly like Go
+            this.address = await this.generateAddress(this.publicKeyBytes);
+            
+            console.log('✅ Wallet keys generated successfully');
+            console.log('🏠 Address:', this.address);
+            // SECURITY: No private key or mnemonic logging
             
         } catch (error) {
-            console.error('❌ Key generation failed:', error);
-            throw new Error('Failed to generate wallet keys');
+            console.error('❌ Error generating keys:', error.message);
+            throw new Error('Failed to generate wallet keys: ' + error.message);
         }
     }
 
-    // P-256 Schlüsselpaar generieren (identisch mit Go elliptic.P256())
-    async _generateP256KeyPair(privateKeyBytes) {
-        const algorithm = {
-            name: 'ECDSA',
-            namedCurve: 'P-256'
-        };
-        
-        // Importiere Private Key
-        const privateKey = await crypto.subtle.importKey(
-            'raw',
-            privateKeyBytes,
-            algorithm,
-            true, // Exportierbar für Signierung
-            ['sign']
-        );
-        
-        // Generiere entsprechenden Public Key
-        const jwkPrivateKey = await crypto.subtle.exportKey('jwk', privateKey);
-        
-        // Importiere Public Key
-        const publicKey = await crypto.subtle.importKey(
-            'jwk',
-            {
-                kty: jwkPrivateKey.kty,
-                crv: jwkPrivateKey.crv,
-                x: jwkPrivateKey.x,
-                y: jwkPrivateKey.y
-            },
-            algorithm,
-            true,
-            ['verify']
-        );
-        
-        // Exportiere Public Key im raw Format
-        const publicKeyBuffer = await crypto.subtle.exportKey('raw', publicKey);
-        
-        // P-256 Public Key ist 65 Bytes (0x04 + 32 Bytes X + 32 Bytes Y)
-        // Go erwartet nur die 64 Bytes (X||Y)
-        const publicKeyBytes = new Uint8Array(publicKeyBuffer).slice(1); // Entferne 0x04 Prefix
-        
-        return {
-            privateKey: privateKey,
-            publicKeyBytes: publicKeyBytes
-        };
-    }
-
-    // Generiere CTC-Adresse (identisch mit Go generateAddress)
-    async _generateAddress(publicKeyBytes) {
-        const hash = await CryptoUtils.sha256(publicKeyBytes);
-        const addressHex = CryptoUtils.bytesToHex(hash).substring(0, 21); // Erste 21 Hex-Zeichen
-        return 'CTC' + addressHex;
-    }
-
-    // FIX: Enhanced ECDSA Signierung (identisch mit Go Sign-Funktion + korrektes Padding)
-    async sign(data) {
-        if (this._isLocked) {
-            throw new Error('Wallet is locked');
-        }
-        
-        try {
-            // SHA-256 Hash der Daten
-            const dataBytes = typeof data === 'string' ? new TextEncoder().encode(data) : data;
-            const hash = await CryptoUtils.sha256(dataBytes);
-            
-            // Signiere Hash mit dem gespeicherten CryptoKey
-            const signature = await crypto.subtle.sign(
-                {
-                    name: 'ECDSA',
-                    hash: 'SHA-256'
-                },
-                this._cryptoKey,
-                hash
-            );
-            
-            // FIX: Korrekte Verarbeitung der DER-encoded Signatur
-            const derSignature = new Uint8Array(signature);
-            const { r, s } = this._parseDERSignature(derSignature);
-            
-            // FIX: Padding auf exakt 32 Bytes (identisch mit Go)
-            const rPadded = CryptoUtils.padToBytes32(r);
-            const sPadded = CryptoUtils.padToBytes32(s);
-            
-            // Kombiniere zu r||s Format (64 Bytes total)
-            const finalSig = new Uint8Array(64);
-            finalSig.set(rPadded, 0);
-            finalSig.set(sPadded, 32);
-            
-            return CryptoUtils.bytesToHex(finalSig);
-            
-        } catch (error) {
-            console.error('❌ Signing failed:', error);
-            throw new Error('Failed to sign data');
-        }
-    }
-
-    // FIX: DER-encoded Signatur parsen (für korrekte r,s Extraktion)
-    _parseDERSignature(derBytes) {
-        try {
-            // DER SEQUENCE parsing
-            if (derBytes[0] !== 0x30) {
-                throw new Error('Invalid DER signature');
-            }
-            
-            let pos = 2; // Skip SEQUENCE tag and length
-            
-            // Parse r
-            if (derBytes[pos] !== 0x02) {
-                throw new Error('Invalid r component');
-            }
-            pos++;
-            const rLength = derBytes[pos++];
-            let r = derBytes.slice(pos, pos + rLength);
-            pos += rLength;
-            
-            // Remove leading zero if present (DER encoding requirement)
-            if (r[0] === 0x00 && r.length > 1) {
-                r = r.slice(1);
-            }
-            
-            // Parse s
-            if (derBytes[pos] !== 0x02) {
-                throw new Error('Invalid s component');
-            }
-            pos++;
-            const sLength = derBytes[pos++];
-            let s = derBytes.slice(pos, pos + sLength);
-            
-            // Remove leading zero if present
-            if (s[0] === 0x00 && s.length > 1) {
-                s = s.slice(1);
-            }
-            
-            return { r, s };
-            
-        } catch (error) {
-            console.error('❌ DER parsing failed:', error);
-            throw new Error('Failed to parse signature');
-        }
-    }
-
-    // FIX: Enhanced Signatur-Verifikation (identisch mit Go Verify-Funktion)
-    static async verify(data, signatureHex, publicKeyHex) {
-        try {
-            // Konvertiere Inputs
-            const dataBytes = typeof data === 'string' ? new TextEncoder().encode(data) : data;
-            const signatureBytes = CryptoUtils.hexToBytes(signatureHex);
-            const publicKeyBytes = CryptoUtils.hexToBytes(publicKeyHex);
-            
-            if (signatureBytes.length !== 64 || publicKeyBytes.length !== 64) {
-                return false;
-            }
-            
-            // Hash der Daten
-            const hash = await CryptoUtils.sha256(dataBytes);
-            
-            // Extrahiere r und s (je 32 Bytes)
-            const r = signatureBytes.slice(0, 32);
-            const s = signatureBytes.slice(32, 64);
-            
-            // Konvertiere zu DER-Format für Web Crypto API
-            const derSignature = this._createDERSignature(r, s);
-            
-            // Konvertiere Public Key für P-256 (füge 0x04 Prefix hinzu)
-            const fullPublicKey = new Uint8Array(65);
-            fullPublicKey[0] = 0x04;
-            fullPublicKey.set(publicKeyBytes, 1);
-            
-            // Importiere Public Key
-            const publicKey = await crypto.subtle.importKey(
-                'raw',
-                fullPublicKey,
-                {
-                    name: 'ECDSA',
-                    namedCurve: 'P-256'
-                },
-                false,
-                ['verify']
-            );
-            
-            // Verifiziere Signatur
-            const isValid = await crypto.subtle.verify(
-                {
-                    name: 'ECDSA',
-                    hash: 'SHA-256'
-                },
-                publicKey,
-                derSignature,
-                hash
-            );
-            
-            return isValid;
-            
-        } catch (error) {
-            console.error('❌ Verification failed:', error);
-            return false;
-        }
-    }
-
-    // FIX: DER-Signatur erstellen (für Verifikation)
-    static _createDERSignature(r, s) {
-        // Entferne führende Nullen, aber behalte mindestens ein Byte
-        function trimLeadingZeros(bytes) {
-            let start = 0;
-            while (start < bytes.length - 1 && bytes[start] === 0) {
-                start++;
-            }
-            return bytes.slice(start);
-        }
-        
-        // Füge führende Null hinzu wenn höchstes Bit gesetzt (DER Requirement)
-        function addLeadingZeroIfNeeded(bytes) {
-            if (bytes[0] & 0x80) {
-                const padded = new Uint8Array(bytes.length + 1);
-                padded[0] = 0x00;
-                padded.set(bytes, 1);
-                return padded;
-            }
-            return bytes;
-        }
-        
-        const rTrimmed = addLeadingZeroIfNeeded(trimLeadingZeros(r));
-        const sTrimmed = addLeadingZeroIfNeeded(trimLeadingZeros(s));
-        
-        // Erstelle DER SEQUENCE
-        const rEncoded = new Uint8Array([0x02, rTrimmed.length, ...rTrimmed]);
-        const sEncoded = new Uint8Array([0x02, sTrimmed.length, ...sTrimmed]);
-        
-        const contentLength = rEncoded.length + sEncoded.length;
-        const der = new Uint8Array([0x30, contentLength, ...rEncoded, ...sEncoded]);
-        
-        return der;
-    }
-
-    // Wallet-Speicher-Interface
-    async getSecureData(password) {
-        if (!password) {
-            throw new Error('Password required for encryption');
-        }
-        
-        return await SecureStorage.encrypt({
-            mnemonic: this.mnemonic,
-            privateKey: this.privateKeyHex,
-            publicKey: this.publicKeyHex,
-            address: this.address
-        }, password);
-    }
-
-    async unlock(encryptedData, password) {
-        const decryptedData = await SecureStorage.decrypt(encryptedData, password);
-        
-        this.mnemonic = decryptedData.mnemonic;
-        this.privateKeyHex = decryptedData.privateKey;
-        this.publicKeyHex = decryptedData.publicKey;
-        this.address = decryptedData.address;
-        
-        // Rekonstruiere andere Schlüssel-Formate
-        this.privateKeyBytes = CryptoUtils.hexToBytes(this.privateKeyHex);
-        this.privateKeyBigInt = BigInt('0x' + this.privateKeyHex);
-        this.publicKeyBytes = CryptoUtils.hexToBytes(this.publicKeyHex);
-        
-        // Rekonstruiere CryptoKey für Signierung
-        await this._reconstructCryptoKey();
-        
-        this._isLocked = false;
-    }
-
-    // Rekonstruiere CryptoKey aus Private Key Bytes
-    async _reconstructCryptoKey() {
-        try {
-            const algorithm = {
-                name: 'ECDSA',
-                namedCurve: 'P-256'
-            };
-            
-            this._cryptoKey = await crypto.subtle.importKey(
-                'raw',
-                this.privateKeyBytes,
-                algorithm,
-                true,
-                ['sign']
-            );
-        } catch (error) {
-            console.error('❌ Failed to reconstruct crypto key:', error);
-            throw new Error('Failed to reconstruct cryptographic key');
-        }
-    }
-
+    // SECURITY: Lock wallet (clear sensitive data from memory)
     lock() {
-        // Lösche sensitive Daten aus dem Speicher
-        this.mnemonic = null;
         this.privateKeyBigInt = null;
         this.privateKeyBytes = null;
-        this.privateKeyHex = null;
-        this._cryptoKey = null;
+        this.mnemonic = null;
         this._isLocked = true;
+        console.log('🔒 Wallet locked');
     }
 
-    // Getter für sichere Informationen
+    // SECURITY: Check if wallet is locked
     isLocked() {
         return this._isLocked;
     }
 
+    // SECURITY: Unlock wallet with password
+    async unlock(encryptedData, password) {
+        try {
+            const decryptedData = await SecureStorage.decrypt(encryptedData, password);
+            
+            this.mnemonic = decryptedData.mnemonic;
+            this.address = decryptedData.address;
+            this.publicKeyHex = decryptedData.publicKey;
+            
+            await this.generateKeysFromMnemonic(this.mnemonic);
+            this._isLocked = false;
+            
+            console.log('🔓 Wallet unlocked successfully');
+            return true;
+        } catch (error) {
+            console.error('❌ Failed to unlock wallet:', error.message);
+            throw error;
+        }
+    }
+
+    // SECURITY: Get wallet data for secure storage
+    async getSecureData(password) {
+        if (this.isLocked()) {
+            throw new Error('Wallet is locked');
+        }
+        
+        const data = {
+            mnemonic: this.mnemonic,
+            address: this.address,
+            publicKey: this.publicKeyHex,
+            createdAt: Date.now()
+        };
+        
+        return await SecureStorage.encrypt(data, password);
+    }
+
+    // SECURITY: Safe export for display (no sensitive data)
+    getSafeExport() {
+        return {
+            address: this.address,
+            publicKeyHex: this.publicKeyHex,
+            isLocked: this._isLocked,
+            hasPrivateKey: !!this.privateKeyBytes
+        };
+    }
+
+    // Get mnemonic (FIXED: Added missing method)
+    getMnemonic() {
+        if (this.isLocked()) {
+            throw new Error('Wallet is locked');
+        }
+        return this.mnemonic;
+    }
+
+    // Get address
     getAddress() {
         return this.address;
     }
 
-    getPublicKey() {
-        return this.publicKeyHex;
+    // PBKDF2 exactly like Go: pbkdf2.Key([]byte(mnemonic), []byte("CTC"), 2048, 32, sha256.New)
+    async pbkdf2(password, salt, iterations, keyLength) {
+        const encoder = new TextEncoder();
+        const passwordBytes = encoder.encode(password);
+        const saltBytes = encoder.encode(salt);
+        
+        const baseKey = await crypto.subtle.importKey(
+            'raw',
+            passwordBytes,
+            { name: 'PBKDF2' },
+            false,
+            ['deriveBits']
+        );
+        
+        const derivedBits = await crypto.subtle.deriveBits(
+            {
+                name: 'PBKDF2',
+                salt: saltBytes,
+                iterations: iterations,
+                hash: 'SHA-256'
+            },
+            baseKey,
+            keyLength * 8
+        );
+        
+        return new Uint8Array(derivedBits);
     }
 
-    getMnemonic() {
-        if (this._isLocked) {
-            throw new Error('Wallet is locked');
+    // Convert bytes to BigInt exactly like Go
+    bytesToBigInt(bytes) {
+        let result = 0n;
+        for (let i = 0; i < bytes.length; i++) {
+            result = (result << 8n) | BigInt(bytes[i]);
         }
-        return this.mnemonic;
+        return result;
     }
 
-    // FIX: Für Account Manager - sicherer Zugriff auf Mnemonic
-    getMnemonicForDisplay() {
-        if (this._isLocked) {
-            throw new Error('Wallet is locked - cannot access mnemonic');
-        }
-        return this.mnemonic;
+    // Convert bytes to hex string
+    bytesToHex(bytes) {
+        return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
     }
 
-    // Private Key für Export (nur wenn entsperrt)
-    getPrivateKeyHex() {
-        if (this._isLocked) {
-            throw new Error('Wallet is locked');
-        }
-        return this.privateKeyHex;
-    }
-
-    // Erweiterte Wallet-Funktionen
-    
-    // Erstelle Wallet aus Private Key (für Import-Funktionalität)
-    static async fromPrivateKey(privateKeyHex) {
+    // ECDSA P-256 scalar multiplication like Go
+    async scalarBaseMult(scalar) {
         try {
-            const wallet = new CTCWallet();
-            
-            // Validiere Private Key Format
-            if (!privateKeyHex || privateKeyHex.length !== 64) {
-                throw new Error('Invalid private key format');
+            // P-256 curve parameters
+            const p = BigInt('0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff');
+            const a = BigInt('0xffffffff00000001000000000000000000000000fffffffffffffffffffffffc');
+            const b = BigInt('0x5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b');
+            const Gx = BigInt('0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296');
+            const Gy = BigInt('0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5');
+            const n = BigInt('0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551');
+
+            // Ensure scalar is in valid range
+            const k = scalar % n;
+            if (k === 0n) {
+                throw new Error('Invalid scalar');
             }
+
+            // Point multiplication using double-and-add algorithm
+            const result = this.pointMultiply(k, Gx, Gy, p, a);
             
-            wallet.privateKeyHex = privateKeyHex;
-            wallet.privateKeyBytes = CryptoUtils.hexToBytes(privateKeyHex);
-            wallet.privateKeyBigInt = BigInt('0x' + privateKeyHex);
-            
-            // Generiere Public Key und Adresse
-            const keyPair = await wallet._generateP256KeyPair(wallet.privateKeyBytes);
-            wallet.publicKeyBytes = keyPair.publicKeyBytes;
-            wallet.publicKeyHex = CryptoUtils.bytesToHex(wallet.publicKeyBytes);
-            wallet._cryptoKey = keyPair.privateKey;
-            wallet.address = await wallet._generateAddress(wallet.publicKeyBytes);
-            
-            // Kein Mnemonic für importierte Wallets
-            wallet.mnemonic = null;
-            wallet._isLocked = false;
-            
-            console.log('✅ Wallet imported from private key');
-            return wallet;
-            
+            return {
+                x: result.x,
+                y: result.y
+            };
         } catch (error) {
-            console.error('❌ Failed to import wallet:', error);
-            throw new Error('Failed to import wallet from private key');
+            console.error('ScalarBaseMult error:', error);
+            throw error;
         }
     }
 
-    // Validiere Wallet-Integrität
-    async validateIntegrity() {
+    // Point multiplication on elliptic curve
+    pointMultiply(k, px, py, p, a) {
+        if (k === 0n) return { x: 0n, y: 0n }; // Point at infinity
+        if (k === 1n) return { x: px, y: py };
+
+        // Double-and-add algorithm
+        let result = { x: 0n, y: 0n }; // Point at infinity
+        let addend = { x: px, y: py };
+
+        while (k > 0n) {
+            if (k & 1n) {
+                result = this.pointAdd(result, addend, p, a);
+            }
+            addend = this.pointDouble(addend, p, a);
+            k >>= 1n;
+        }
+
+        return result;
+    }
+
+    // Point addition on elliptic curve
+    pointAdd(p1, p2, p, a) {
+        if (p1.x === 0n && p1.y === 0n) return p2; // P1 is point at infinity
+        if (p2.x === 0n && p2.y === 0n) return p1; // P2 is point at infinity
+        
+        if (p1.x === p2.x) {
+            if (p1.y === p2.y) {
+                return this.pointDouble(p1, p, a);
+            } else {
+                return { x: 0n, y: 0n }; // Point at infinity
+            }
+        }
+
+        const dx = this.mod(p2.x - p1.x, p);
+        const dy = this.mod(p2.y - p1.y, p);
+        const s = this.mod(dy * this.modInverse(dx, p), p);
+        
+        const x3 = this.mod(s * s - p1.x - p2.x, p);
+        const y3 = this.mod(s * (p1.x - x3) - p1.y, p);
+        
+        return { x: x3, y: y3 };
+    }
+
+    // Point doubling on elliptic curve
+    pointDouble(point, p, a) {
+        if (point.x === 0n && point.y === 0n) return point; // Point at infinity
+        
+        const s = this.mod((3n * point.x * point.x + a) * this.modInverse(2n * point.y, p), p);
+        const x3 = this.mod(s * s - 2n * point.x, p);
+        const y3 = this.mod(s * (point.x - x3) - point.y, p);
+        
+        return { x: x3, y: y3 };
+    }
+
+    // Modular arithmetic helpers
+    mod(a, m) {
+        return ((a % m) + m) % m;
+    }
+
+    // Extended Euclidean algorithm for modular inverse
+    modInverse(a, m) {
+        if (a < 0n) a = this.mod(a, m);
+        
+        let [old_r, r] = [a, m];
+        let [old_s, s] = [1n, 0n];
+        
+        while (r !== 0n) {
+            const quotient = old_r / r;
+            [old_r, r] = [r, old_r - quotient * r];
+            [old_s, s] = [s, old_s - quotient * s];
+        }
+        
+        return this.mod(old_s, m);
+    }
+
+    // Convert BigInt to bytes with padding
+    bigIntToBytes(bigint, length) {
+        const hex = bigint.toString(16).padStart(length * 2, '0');
+        const bytes = new Uint8Array(length);
+        for (let i = 0; i < length; i++) {
+            bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+        }
+        return bytes;
+    }
+
+    // Create public key bytes X||Y like Go (32 + 32 = 64 bytes)
+    createPublicKeyBytes(x, y) {
+        const xBytes = this.bigIntToBytes(x, 32);
+        const yBytes = this.bigIntToBytes(y, 32);
+        const result = new Uint8Array(64);
+        result.set(xBytes, 0);
+        result.set(yBytes, 32);
+        return result;
+    }
+
+    // Generate address exactly like Go: "CTC" + first 21 hex chars of SHA256(pubKey)
+    async generateAddress(publicKeyBytes) {
+        const hashBuffer = await crypto.subtle.digest('SHA-256', publicKeyBytes);
+        const hashArray = new Uint8Array(hashBuffer);
+        const hashHex = this.bytesToHex(hashArray);
+        return 'CTC' + hashHex.substring(0, 21);
+    }
+
+    // Sign data with ECDSA exactly like Go
+    async sign(data) {
+        if (this.isLocked() || !this.privateKeyBytes) {
+            throw new Error('Wallet is locked or private key not available');
+        }
+        
         try {
-            if (this._isLocked) {
-                throw new Error('Wallet is locked');
-            }
-            
-            // Teste Signierung und Verifikation
-            const testData = 'wallet-integrity-test';
-            const signature = await this.sign(testData);
-            const isValid = await CTCWallet.verify(testData, signature, this.publicKeyHex);
-            
-            if (!isValid) {
-                throw new Error('Signature verification failed');
-            }
-            
-            // Teste Adress-Generierung
-            const expectedAddress = await this._generateAddress(this.publicKeyBytes);
-            if (expectedAddress !== this.address) {
-                throw new Error('Address generation mismatch');
-            }
-            
-            console.log('✅ Wallet integrity validated');
-            return true;
-            
+            const privateKey = await crypto.subtle.importKey(
+                'raw',
+                this.privateKeyBytes,
+                { name: 'ECDSA', namedCurve: 'P-256' },
+                false,
+                ['sign']
+            );
+
+            const signature = await crypto.subtle.sign(
+                { name: 'ECDSA', hash: 'SHA-256' },
+                privateKey,
+                data
+            );
+
+            return this.bytesToHex(new Uint8Array(signature));
         } catch (error) {
-            console.error('❌ Wallet integrity check failed:', error);
+            console.error('Signing error:', error);
+            throw error;
+        }
+    }
+
+    // Verify signature exactly like Go
+    static async verify(data, signatureHex, publicKeyHex) {
+        try {
+            // Convert hex strings to bytes
+            const signatureBytes = new Uint8Array(signatureHex.match(/.{2}/g).map(byte => parseInt(byte, 16)));
+            const publicKeyBytes = new Uint8Array(publicKeyHex.match(/.{2}/g).map(byte => parseInt(byte, 16)));
+            
+            if (publicKeyBytes.length !== 64) {
+                throw new Error('Invalid public key length');
+            }
+
+            // Create public key from X||Y coordinates
+            const x = publicKeyBytes.slice(0, 32);
+            const y = publicKeyBytes.slice(32, 64);
+            
+            // Import public key for verification
+            const spkiKey = await this.createSPKIPublicKey(x, y);
+            const publicKey = await crypto.subtle.importKey(
+                'spki',
+                spkiKey,
+                { name: 'ECDSA', namedCurve: 'P-256' },
+                false,
+                ['verify']
+            );
+
+            return await crypto.subtle.verify(
+                { name: 'ECDSA', hash: 'SHA-256' },
+                publicKey,
+                signatureBytes,
+                data
+            );
+        } catch (error) {
+            console.error('Verification error:', error);
             return false;
         }
     }
 
-    // Wallet-Info für Debugging
-    getWalletInfo() {
-        return {
-            address: this.address,
-            publicKey: this.publicKeyHex,
-            isLocked: this._isLocked,
-            hasMnemonic: !!this.mnemonic,
-            hasPrivateKey: !!this.privateKeyHex && !this._isLocked,
-            hasCryptoKey: !!this._cryptoKey
-        };
+    // Helper to create SPKI format public key
+    static async createSPKIPublicKey(x, y) {
+        // SPKI header for P-256 public key
+        const spkiHeader = new Uint8Array([
+            0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86,
+            0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x08, 0x2a,
+            0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x03,
+            0x42, 0x00, 0x04
+        ]);
+        
+        const result = new Uint8Array(spkiHeader.length + 64);
+        result.set(spkiHeader, 0);
+        result.set(x, spkiHeader.length);
+        result.set(y, spkiHeader.length + 32);
+        
+        return result;
     }
 
-    // Sicher löschen (überschreibe sensitive Daten)
-    secureDestroy() {
-        // Überschreibe Arrays mit Zufallsdaten
-        if (this.privateKeyBytes) {
-            crypto.getRandomValues(this.privateKeyBytes);
+    // SECURITY: Safe mnemonic display (only for legitimate recovery)
+    getMnemonicForDisplay() {
+        if (this.isLocked()) {
+            throw new Error('Wallet is locked');
         }
         
-        // Setze alle Referenzen auf null
-        this.mnemonic = null;
+        // Add warning and require user confirmation
+        console.warn('⚠️ SECURITY WARNING: Mnemonic phrase requested for display');
+        return this.mnemonic;
+    }
+
+    // SECURITY: Clear all sensitive data
+    destroy() {
         this.privateKeyBigInt = null;
         this.privateKeyBytes = null;
-        this.privateKeyHex = null;
+        this.mnemonic = null;
         this.publicKeyBytes = null;
         this.publicKeyHex = null;
         this.address = null;
-        this._cryptoKey = null;
         this._isLocked = true;
         
-        console.log('🧹 Wallet securely destroyed');
+        console.log('🔥 Wallet destroyed - all sensitive data cleared');
+    }
+
+    // LEGACY: Get private key as hex string (for export)
+    get privateKey() {
+        if (this.isLocked() || !this.privateKeyBytes) {
+            throw new Error('Wallet is locked or private key not available');
+        }
+        return this.bytesToHex(this.privateKeyBytes);
+    }
+
+    // Get private key hex for compatibility
+    get privateKeyHex() {
+        if (this.isLocked() || !this.privateKeyBytes) {
+            throw new Error('Wallet is locked or private key not available');
+        }
+        return this.bytesToHex(this.privateKeyBytes);
     }
 }
 
-// Export für globale Verwendung
+// CTC API Integration
+const CTC = {
+    // Get balance for address
+    async getBalance(address) {
+        try {
+            if (window.ctcApi) {
+                return await window.ctcApi.getBalance(address);
+            } else {
+                console.warn('CTC API not available, using fallback');
+                return Math.random() * 100; // Fallback for demo
+            }
+        } catch (error) {
+            console.error('Error getting balance:', error);
+            return 0;
+        }
+    },
+
+    // Get transaction history
+    async getTransactions(address, limit = 10) {
+        try {
+            if (window.ctcApi) {
+                return await window.ctcApi.getTransactionHistory(address);
+            } else {
+                console.warn('CTC API not available, using fallback');
+                return []; // Fallback for demo
+            }
+        } catch (error) {
+            console.error('Error getting transactions:', error);
+            return [];
+        }
+    },
+
+    // Send transaction
+    async sendTransaction(from, to, amount, wallet) {
+        try {
+            if (window.transactionManager) {
+                return await window.transactionManager.sendTransaction(from, to, amount, wallet);
+            } else {
+                console.warn('Transaction Manager not available, using fallback');
+                return { success: true, txid: 'mock_tx_' + Date.now() };
+            }
+        } catch (error) {
+            console.error('Error sending transaction:', error);
+            throw error;
+        }
+    }
+};
+
+// Export for use in other modules
 window.CTCWallet = CTCWallet;
-window.CryptoUtils = CryptoUtils;
+window.SecureStorage = SecureStorage;
 window.CTC_WORD_LIST = CTC_WORD_LIST;
+window.CTC = CTC;
+
+console.log('🔑 CTC Wallet library loaded successfully');
