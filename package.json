@@ -1,0 +1,44 @@
+{
+  "name": "ctc-wallet",
+  "version": "2.0.0",
+  "description": "CTC Wallet - Professional Cryptocurrency Management",
+  "main": "src/index.html",
+  "scripts": {
+    "start": "npx serve src -p 3000",
+    "build": "npm run build:icons && npm run build:manifest",
+    "build:icons": "echo 'Generate app icons'",
+    "build:manifest": "echo 'Process manifest'",
+    "dev": "npx serve src -p 3000 --no-clipboard",
+    "test": "echo 'No tests configured'",
+    "deploy": "vercel --prod"
+  },
+  "keywords": [
+    "crypto",
+    "wallet",
+    "ctc",
+    "blockchain",
+    "defi",
+    "web3",
+    "pwa",
+    "cryptocurrency",
+    "bitcoin",
+    "ethereum"
+  ],
+  "author": "CTC Development Team",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^14.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ctc-chain/ctc-wallet.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ctc-chain/ctc-wallet/issues"
+  },
+  "homepage": "https://wallet.ctc.network",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}
