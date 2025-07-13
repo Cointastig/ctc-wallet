@@ -1,0 +1,2156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0A0B0F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>CTC Wallet - Professional Crypto Management</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="screen active">
+        <div class="splash-content">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                        <circle cx="40" cy="40" r="39" stroke="url(#gradient)" stroke-width="2"/>
+                        <path d="M40 20C29 20 20 29 20 40C20 51 29 60 40 60C51 60 60 51 60 40" stroke="url(#gradient)" stroke-width="3" stroke-linecap="round"/>
+                        <text x="40" y="48" text-anchor="middle" fill="#00D4FF" font-size="24" font-weight="700">CTC</text>
+                        <defs>
+                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#00D4FF"/>
+                                <stop offset="100%" style="stop-color:#0099CC"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+            </div>
+            <h1 class="splash-title">CTC Wallet</h1>
+            <p class="splash-subtitle">Professional Crypto Management</p>
+            <div class="loading-dots">
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Welcome Screen -->
+    <div id="welcome-screen" class="screen">
+        <div class="content">
+            <div class="welcome-content">
+                <div class="welcome-illustration">
+                    <svg width="200" height="200" viewBox="0 0 200 200" fill="none">
+                        <circle cx="100" cy="100" r="80" fill="url(#welcome-gradient)" opacity="0.1"/>
+                        <circle cx="100" cy="100" r="60" fill="url(#welcome-gradient)" opacity="0.1"/>
+                        <circle cx="100" cy="100" r="40" fill="url(#welcome-gradient)" opacity="0.2"/>
+                        <path d="M100 60C78 60 60 78 60 100C60 122 78 140 100 140C122 140 140 122 140 100" stroke="url(#welcome-gradient)" stroke-width="4" stroke-linecap="round"/>
+                        <text x="100" y="108" text-anchor="middle" fill="#00D4FF" font-size="32" font-weight="700">CTC</text>
+                        <defs>
+                            <linearGradient id="welcome-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#00D4FF"/>
+                                <stop offset="100%" style="stop-color:#0099CC"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                
+                <h1 class="heading-1">Welcome to the Future of Finance</h1>
+                <p class="body-large" style="color: var(--text-secondary); text-align: center; margin-bottom: var(--space-8);">
+                    Your secure gateway to the CTC blockchain ecosystem
+                </p>
+                
+                <div class="feature-cards">
+                    <div class="feature-card slide-up" style="animation-delay: 0.1s;">
+                        <div class="feature-icon">🔐</div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">Bank-Grade Security</h3>
+                            <p class="feature-description">Multi-layer encryption & biometric protection</p>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card slide-up" style="animation-delay: 0.2s;">
+                        <div class="feature-icon">⚡</div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">Lightning Fast</h3>
+                            <p class="feature-description">Sub-second confirmations with DPoS</p>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card slide-up" style="animation-delay: 0.3s;">
+                        <div class="feature-icon">💎</div>
+                        <div class="feature-content">
+                            <h3 class="feature-title">Earn Rewards</h3>
+                            <p class="feature-description">Up to 12.5% APY staking rewards</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="welcome-actions">
+                    <button class="btn btn-primary scale-in" style="animation-delay: 0.4s;" onclick="showScreen('create-wallet-screen')">
+                        Create New Wallet
+                    </button>
+                    <button class="btn btn-secondary scale-in" style="animation-delay: 0.5s;" onclick="showScreen('import-wallet-screen')">
+                        Import Existing Wallet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Wallet Screen -->
+    <div id="create-wallet-screen" class="screen">
+        <div class="header">
+            <div class="header-action" onclick="showScreen('welcome-screen')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </div>
+            <div class="header-title">Create Wallet</div>
+            <div style="width: 40px;"></div>
+        </div>
+        
+        <div class="content">
+            <div class="create-wallet-content">
+                <div class="security-badge">
+                    <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                        <path d="M32 4L8 16V32C8 48 32 60 32 60C32 60 56 48 56 32V16L32 4Z" fill="url(#shield-gradient)" opacity="0.1"/>
+                        <path d="M32 4L8 16V32C8 48 32 60 32 60C32 60 56 48 56 32V16L32 4Z" stroke="url(#shield-gradient)" stroke-width="2" fill="none"/>
+                        <path d="M20 32L28 40L44 24" stroke="url(#shield-gradient)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        <defs>
+                            <linearGradient id="shield-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#00D4FF"/>
+                                <stop offset="100%" style="stop-color:#0099CC"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                
+                <h2 class="heading-2">Secure Your Wallet</h2>
+                <p class="body-base" style="color: var(--text-secondary); text-align: center; margin-bottom: var(--space-8);">
+                    Create a 6-digit PIN to protect your funds
+                </p>
+                
+                <div class="pin-container">
+                    <div class="pin-dots">
+                        <div class="pin-dot" id="pin-1"></div>
+                        <div class="pin-dot" id="pin-2"></div>
+                        <div class="pin-dot" id="pin-3"></div>
+                        <div class="pin-dot" id="pin-4"></div>
+                        <div class="pin-dot" id="pin-5"></div>
+                        <div class="pin-dot" id="pin-6"></div>
+                    </div>
+                    
+                    <div class="pin-pad">
+                        <button class="pin-key" onclick="addPin('1')">1</button>
+                        <button class="pin-key" onclick="addPin('2')">2</button>
+                        <button class="pin-key" onclick="addPin('3')">3</button>
+                        <button class="pin-key" onclick="addPin('4')">4</button>
+                        <button class="pin-key" onclick="addPin('5')">5</button>
+                        <button class="pin-key" onclick="addPin('6')">6</button>
+                        <button class="pin-key" onclick="addPin('7')">7</button>
+                        <button class="pin-key" onclick="addPin('8')">8</button>
+                        <button class="pin-key" onclick="addPin('9')">9</button>
+                        <button class="pin-key action" onclick="clearPin()">Clear</button>
+                        <button class="pin-key" onclick="addPin('0')">0</button>
+                        <button class="pin-key action" onclick="deletePin()">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 7H8l-5 5 5 5h13a2 2 0 002-2V9a2 2 0 00-2-2z"/>
+                                <line x1="18" y1="9" x2="12" y2="15"/>
+                                <line x1="12" y1="9" x2="18" y2="15"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recovery Phrase Screen -->
+    <div id="seed-phrase-screen" class="screen">
+        <div class="header">
+            <div class="header-action" onclick="showScreen('create-wallet-screen')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </div>
+            <div class="header-title">Recovery Phrase</div>
+            <div style="width: 40px;"></div>
+        </div>
+        
+        <div class="content">
+            <div class="warning-card">
+                <div class="warning-icon">⚠️</div>
+                <div class="warning-content">
+                    <h4 class="heading-4">Critical Security Alert</h4>
+                    <p class="body-small">Write down these words in exact order. This is the ONLY way to recover your wallet.</p>
+                </div>
+            </div>
+            
+            <div class="seed-grid" id="seed-grid">
+                <!-- Seeds will be generated here -->
+            </div>
+            
+            <div class="seed-actions">
+                <button class="btn btn-secondary" onclick="copySeedPhrase()">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="5" y="5" width="10" height="10" rx="2"/>
+                        <path d="M9 5V3a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2h-2"/>
+                    </svg>
+                    Copy Phrase
+                </button>
+                
+                <button class="btn btn-primary" onclick="confirmSeedPhrase()">
+                    I've Saved It Securely
+                </button>
+            </div>
+            
+            <p class="security-note">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: middle; margin-right: 4px;">
+                    <path d="M8 0C3.6 0 0 3.6 0 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm1 12H7V7h2v5zm0-6H7V4h2v2z"/>
+                </svg>
+                Never share your recovery phrase with anyone
+            </p>
+        </div>
+    </div>
+
+    <!-- Auth Screen -->
+    <div id="auth-screen" class="screen">
+        <div class="content">
+            <div class="auth-content">
+                <div class="auth-logo">
+                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                        <circle cx="40" cy="40" r="39" stroke="url(#auth-gradient)" stroke-width="2" opacity="0.3"/>
+                        <circle cx="40" cy="40" r="30" stroke="url(#auth-gradient)" stroke-width="2" opacity="0.5"/>
+                        <circle cx="40" cy="40" r="20" stroke="url(#auth-gradient)" stroke-width="2"/>
+                        <text x="40" y="48" text-anchor="middle" fill="#00D4FF" font-size="24" font-weight="700">CTC</text>
+                        <defs>
+                            <linearGradient id="auth-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#00D4FF"/>
+                                <stop offset="100%" style="stop-color:#0099CC"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                
+                <h2 class="heading-2">Welcome Back</h2>
+                <p class="body-base" style="color: var(--text-secondary); margin-bottom: var(--space-8);">
+                    Unlock your wallet to continue
+                </p>
+                
+                <div class="pin-container">
+                    <div class="pin-dots">
+                        <div class="pin-dot" id="auth-pin-1"></div>
+                        <div class="pin-dot" id="auth-pin-2"></div>
+                        <div class="pin-dot" id="auth-pin-3"></div>
+                        <div class="pin-dot" id="auth-pin-4"></div>
+                        <div class="pin-dot" id="auth-pin-5"></div>
+                        <div class="pin-dot" id="auth-pin-6"></div>
+                    </div>
+                    
+                    <div class="biometric-button" onclick="authenticateBiometric()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 11v4m0 0l-2-2m2 2l2-2M8 7a4 4 0 118 0M3 21v-2a4 4 0 014-4h10a4 4 0 014 4v2"/>
+                        </svg>
+                    </div>
+                    
+                    <div class="pin-pad">
+                        <button class="pin-key" onclick="addAuthPin('1')">1</button>
+                        <button class="pin-key" onclick="addAuthPin('2')">2</button>
+                        <button class="pin-key" onclick="addAuthPin('3')">3</button>
+                        <button class="pin-key" onclick="addAuthPin('4')">4</button>
+                        <button class="pin-key" onclick="addAuthPin('5')">5</button>
+                        <button class="pin-key" onclick="addAuthPin('6')">6</button>
+                        <button class="pin-key" onclick="addAuthPin('7')">7</button>
+                        <button class="pin-key" onclick="addAuthPin('8')">8</button>
+                        <button class="pin-key" onclick="addAuthPin('9')">9</button>
+                        <button class="pin-key action" onclick="forgotPin()">Forgot?</button>
+                        <button class="pin-key" onclick="addAuthPin('0')">0</button>
+                        <button class="pin-key action" onclick="deleteAuthPin()">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 7H8l-5 5 5 5h13a2 2 0 002-2V9a2 2 0 00-2-2z"/>
+                                <line x1="18" y1="9" x2="12" y2="15"/>
+                                <line x1="12" y1="9" x2="18" y2="15"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Screen -->
+    <div id="dashboard-screen" class="screen">
+        <div class="header">
+            <div class="header-logo">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <circle cx="16" cy="16" r="15" stroke="currentColor" stroke-width="2" opacity="0.3"/>
+                    <path d="M16 8C11.6 8 8 11.6 8 16C8 20.4 11.6 24 16 24" stroke="url(#logo-gradient)" stroke-width="2" stroke-linecap="round"/>
+                    <defs>
+                        <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#00D4FF"/>
+                            <stop offset="100%" style="stop-color:#0099CC"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <div class="header-title">Portfolio</div>
+            <div class="header-action" onclick="showScreen('notifications-screen')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    <circle cx="17" cy="7" r="3" fill="var(--accent-primary)" stroke="none"/>
+                </svg>
+            </div>
+        </div>
+        
+        <div class="content">
+            <!-- Portfolio Overview -->
+            <div class="portfolio-card">
+                <div class="portfolio-header">
+                    <div class="portfolio-label">Total Portfolio Value</div>
+                    <div class="portfolio-menu">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" opacity="0.5">
+                            <circle cx="4" cy="10" r="2"/>
+                            <circle cx="10" cy="10" r="2"/>
+                            <circle cx="16" cy="10" r="2"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="portfolio-balance">$24,500.00</div>
+                <div class="portfolio-value">10,000.00 CTC</div>
+                <div class="portfolio-change change-positive">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 5v10m-5-5l5-5 5 5"/>
+                    </svg>
+                    <span>+$2,450.00 (12.5%)</span>
+                    <span class="change-period">24h</span>
+                </div>
+                
+                <div class="portfolio-chart">
+                    <canvas id="portfolio-chart" height="120"></canvas>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="action-grid">
+                <div class="action-button" onclick="showScreen('send-screen')">
+                    <div class="action-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="19" x2="12" y2="5"/>
+                            <polyline points="5 12 12 5 19 12"/>
+                        </svg>
+                    </div>
+                    <div class="action-label">Send</div>
+                </div>
+                
+                <div class="action-button" onclick="showScreen('receive-screen')">
+                    <div class="action-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <polyline points="19 12 12 19 5 12"/>
+                        </svg>
+                    </div>
+                    <div class="action-label">Receive</div>
+                </div>
+                
+                <div class="action-button" onclick="showScreen('swap-screen')">
+                    <div class="action-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                        </svg>
+                    </div>
+                    <div class="action-label">Swap</div>
+                </div>
+                
+                <div class="action-button" onclick="showScreen('buy-screen')">
+                    <div class="action-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="8" width="18" height="12" rx="2"/>
+                            <path d="M7 8V6a2 2 0 012-2h6a2 2 0 012 2v2"/>
+                            <line x1="12" y1="12" x2="12" y2="16"/>
+                        </svg>
+                    </div>
+                    <div class="action-label">Buy</div>
+                </div>
+            </div>
+            
+            <!-- Assets -->
+            <div class="section-header">
+                <h3 class="section-title">Assets</h3>
+                <a href="#" class="section-link" onclick="showScreen('all-assets-screen'); return false;">View All</a>
+            </div>
+            
+            <div class="asset-list">
+                <div class="asset-item" onclick="showScreen('asset-detail-screen')">
+                    <div class="asset-icon">CTC</div>
+                    <div class="asset-details">
+                        <div class="asset-name">Community Trust Coin</div>
+                        <div class="asset-symbol">CTC</div>
+                    </div>
+                    <div class="asset-values">
+                        <div class="asset-balance">10,000.00</div>
+                        <div class="asset-value">$24,500.00</div>
+                    </div>
+                </div>
+                
+                <div class="asset-item">
+                    <div class="asset-icon token">BTC</div>
+                    <div class="asset-details">
+                        <div class="asset-name">Bitcoin</div>
+                        <div class="asset-symbol">BTC</div>
+                    </div>
+                    <div class="asset-values">
+                        <div class="asset-balance">0.00</div>
+                        <div class="asset-value">$0.00</div>
+                    </div>
+                </div>
+                
+                <div class="asset-item">
+                    <div class="asset-icon token">ETH</div>
+                    <div class="asset-details">
+                        <div class="asset-name">Ethereum</div>
+                        <div class="asset-symbol">ETH</div>
+                    </div>
+                    <div class="asset-values">
+                        <div class="asset-balance">0.00</div>
+                        <div class="asset-value">$0.00</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="section-header">
+                <h3 class="section-title">Recent Activity</h3>
+                <a href="#" class="section-link" onclick="showScreen('activity-screen'); return false;">View All</a>
+            </div>
+            
+            <div class="transaction-list">
+                <!-- Transactions will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Send Screen -->
+    <div id="send-screen" class="screen">
+        <div class="header">
+            <div class="header-action" onclick="showScreen('dashboard-screen')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </div>
+            <div class="header-title">Send CTC</div>
+            <div class="header-action" onclick="scanQRCode()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"/>
+                    <rect x="14" y="3" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/>
+                </svg>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="send-content">
+                <!-- Amount Input -->
+                <div class="amount-section">
+                    <div class="balance-info">
+                        <span class="balance-label">Available Balance</span>
+                        <span class="balance-amount">10,000.00 CTC</span>
+                    </div>
+                    
+                    <div class="amount-input-container">
+                        <input type="number" class="amount-input" placeholder="0.00" id="amount">
+                        <div class="amount-converted">≈ $0.00 USD</div>
+                    </div>
+                    
+                    <div class="amount-presets">
+                        <button class="preset-button" onclick="setAmount(25)">25%</button>
+                        <button class="preset-button" onclick="setAmount(50)">50%</button>
+                        <button class="preset-button" onclick="setAmount(75)">75%</button>
+                        <button class="preset-button" onclick="setAmount(100)">MAX</button>
+                    </div>
+                </div>
+                
+                <!-- Recipient Input -->
+                <div class="input-group">
+                    <label class="input-label">Recipient Address</label>
+                    <div class="input-container">
+                        <input type="text" class="input-field" placeholder="Enter CTC address or ENS" id="recipient">
+                        <div class="input-addon">
+                            <button class="contacts-button" onclick="showContacts()">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M17 19v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2"/>
+                                    <circle cx="10" cy="7" r="4"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Network Fee -->
+                <div class="fee-section">
+                    <div class="fee-header">
+                        <span class="fee-label">Network Fee</span>
+                        <span class="fee-customize" onclick="showFeeOptions()">Customize</span>
+                    </div>
+                    
+                    <div class="fee-selector">
+                        <div class="fee-option" onclick="selectFee(this, 'slow')">
+                            <div class="fee-speed">🐢 Slow</div>
+                            <div class="fee-amount">0.001 CTC</div>
+                            <div class="fee-time">~10 min</div>
+                        </div>
+                        <div class="fee-option selected" onclick="selectFee(this, 'normal')">
+                            <div class="fee-speed">⚡ Normal</div>
+                            <div class="fee-amount">0.01 CTC</div>
+                            <div class="fee-time">~3 min</div>
+                        </div>
+                        <div class="fee-option" onclick="selectFee(this, 'fast')">
+                            <div class="fee-speed">🚀 Fast</div>
+                            <div class="fee-amount">0.1 CTC</div>
+                            <div class="fee-time">~30 sec</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Transaction Summary -->
+                <div class="transaction-summary">
+                    <div class="summary-row">
+                        <span>Amount</span>
+                        <span id="summary-amount">0.00 CTC</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Network Fee</span>
+                        <span id="summary-fee">0.01 CTC</span>
+                    </div>
+                    <div class="summary-divider"></div>
+                    <div class="summary-row summary-total">
+                        <span>Total</span>
+                        <span id="summary-total">0.01 CTC</span>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" onclick="reviewTransaction()">
+                    Review Transaction
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction Review Screen -->
+    <div id="confirm-screen" class="screen">
+        <div class="header">
+            <div class="header-action" onclick="showScreen('send-screen')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </div>
+            <div class="header-title">Review Transaction</div>
+            <div style="width: 40px;"></div>
+        </div>
+        
+        <div class="content">
+            <div class="confirm-content">
+                <div class="transaction-review">
+                    <div class="review-header">
+                        <div class="review-icon">
+                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                                <circle cx="24" cy="24" r="23" stroke="url(#send-gradient)" stroke-width="2"/>
+                                <path d="M24 16V32M16 24L24 16L32 24" stroke="url(#send-gradient)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                                <defs>
+                                    <linearGradient id="send-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#00D4FF"/>
+                                        <stop offset="100%" style="stop-color:#0099CC"/>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                        </div>
+                        <h2 class="heading-2">Sending CTC</h2>
+                    </div>
+                    
+                    <div class="review-amount">
+                        <div class="amount-large">100.00 CTC</div>
+                        <div class="amount-usd">≈ $245.00 USD</div>
+                    </div>
+                    
+                    <div class="review-details">
+                        <div class="detail-card">
+                            <div class="detail-label">From</div>
+                            <div class="detail-content">
+                                <div class="wallet-info">
+                                    <div class="wallet-icon">👤</div>
+                                    <div>
+                                        <div class="wallet-name">My Wallet</div>
+                                        <div class="wallet-address">ctc1q...mxuh</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-arrow">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <polyline points="19 12 12 19 5 12"/>
+                            </svg>
+                        </div>
+                        
+                        <div class="detail-card">
+                            <div class="detail-label">To</div>
+                            <div class="detail-content">
+                                <div class="wallet-info">
+                                    <div class="wallet-icon">📬</div>
+                                    <div>
+                                        <div class="wallet-name">External Wallet</div>
+                                        <div class="wallet-address">ctc1q...7x8a</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="fee-summary">
+                        <div class="fee-row">
+                            <span>Network Fee</span>
+                            <span>0.01 CTC</span>
+                        </div>
+                        <div class="fee-row">
+                            <span>Estimated Time</span>
+                            <span>~3 minutes</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="confirm-actions">
+                    <button class="btn btn-secondary" onclick="showScreen('send-screen')">
+                        Cancel
+                    </button>
+                    <button class="btn btn-primary" onclick="sendTransaction()">
+                        Confirm & Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Screen -->
+    <div id="success-screen" class="screen">
+        <div class="content">
+            <div class="success-container">
+                <div class="success-animation">
+                    <div class="success-icon"></div>
+                </div>
+                
+                <h2 class="heading-2">Transaction Sent!</h2>
+                <p class="body-base" style="color: var(--text-secondary); margin-bottom: var(--space-6);">
+                    Your transaction has been submitted to the network
+                </p>
+                
+                <div class="transaction-details-card">
+                    <div class="detail-row">
+                        <span class="detail-label">Transaction ID</span>
+                        <div class="detail-value">
+                            <span class="tx-hash">a8f3b2c1...f8a9</span>
+                            <button class="copy-button" onclick="copyTxHash()">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="4" y="4" width="8" height="8" rx="1"/>
+                                    <path d="M8 4V2a1 1 0 011-1h5a1 1 0 011 1v5a1 1 0 01-1 1h-2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <span class="detail-label">Status</span>
+                        <div class="status-badge pending">
+                            <div class="status-dot"></div>
+                            Pending
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="success-actions">
+                    <button class="btn btn-primary" onclick="showScreen('dashboard-screen')">
+                        Back to Dashboard
+                    </button>
+                    <button class="btn btn-ghost" onclick="viewTransaction()">
+                        View on Explorer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receive Screen -->
+    <div id="receive-screen" class="screen">
+        <div class="header">
+            <div class="header-action" onclick="showScreen('dashboard-screen')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </div>
+            <div class="header-title">Receive CTC</div>
+            <div class="header-action" onclick="shareAddress()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/>
+                    <circle cx="5" cy="19" r="3"/>
+                    <circle cx="5" cy="5" r="3"/>
+                    <circle cx="19" cy="12" r="3"/>
+                </svg>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="receive-content">
+                <div class="wallet-selector">
+                    <div class="wallet-option active">
+                        <div class="wallet-icon">CTC</div>
+                        <div class="wallet-details">
+                            <div class="wallet-name">CTC Wallet</div>
+                            <div class="wallet-network">CTC Mainnet</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="qr-container">
+                    <div class="qr-code">
+                        <svg width="200" height="200" viewBox="0 0 200 200" fill="none">
+                            <!-- Simplified QR representation -->
+                            <rect width="200" height="200" fill="white"/>
+                            <path d="M20 20h40v40H20zM140 20h40v40h-40zM20 140h40v40H20z" fill="black"/>
+                            <path d="M80 20h20v20H80zM20 80h20v20H20zM60 60h20v20H60zM100 80h20v20h-20zM140 100h20v20h-20z" fill="black"/>
+                        </svg>
+                    </div>
+                    <div class="qr-logo">
+                        <div class="logo-circle">CTC</div>
+                    </div>
+                </div>
+                
+                <div class="address-section">
+                    <div class="address-label">Your CTC Address</div>
+                    <div class="address-display">
+                        <span id="wallet-address">ctc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhxwmxuh</span>
+                    </div>
+                    
+                    <div class="address-actions">
+                        <button class="btn btn-secondary" onclick="copyAddress()">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="5" y="5" width="10" height="10" rx="2"/>
+                                <path d="M9 5V3a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2h-2"/>
+                            </svg>
+                            Copy Address
+                        </button>
+                        
+                        <button class="btn btn-ghost" onclick="requestAmount()">
+                            Request Amount
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="receive-note">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="flex-shrink: 0;">
+                        <path d="M8 0C3.6 0 0 3.6 0 8s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8zm1 12H7V7h2v5zm0-6H7V4h2v2z"/>
+                    </svg>
+                    <span>Only send CTC to this address. Sending other tokens may result in permanent loss.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Markets Screen -->
+    <div id="markets-screen" class="screen">
+        <div class="header">
+            <div class="header-search">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="9" cy="9" r="7"/>
+                    <path d="M19 19l-4.35-4.35"/>
+                </svg>
+                <input type="text" placeholder="Search markets..." class="search-input">
+            </div>
+        </div>
+        
+        <div class="content">
+            <!-- Market Stats -->
+            <div class="market-stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Market Cap</div>
+                        <div class="stat-value">$245M</div>
+                        <div class="stat-change change-positive">+5.2%</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-content">
+                        <div class="stat-label">24h Volume</div>
+                        <div class="stat-value">$12.5M</div>
+                        <div class="stat-change change-positive">+18.7%</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Top Gainer</div>
+                        <div class="stat-value">CTC</div>
+                        <div class="stat-change change-positive">+12.5%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Market Tabs -->
+            <div class="market-tabs">
+                <button class="tab-button active">All</button>
+                <button class="tab-button">Favorites</button>
+                <button class="tab-button">Gainers</button>
+                <button class="tab-button">Losers</button>
+                <button class="tab-button">New</button>
+            </div>
+            
+            <!-- Market List -->
+            <div class="market-list">
+                <div class="market-item">
+                    <div class="market-position">1</div>
+                    <div class="market-asset">
+                        <div class="asset-icon">CTC</div>
+                        <div class="asset-info">
+                            <div class="asset-name">CTC</div>
+                            <div class="asset-symbol">Community Trust</div>
+                        </div>
+                    </div>
+                    <div class="market-chart">
+                        <svg width="60" height="30" viewBox="0 0 60 30" fill="none">
+                            <path d="M0 20 L10 18 L20 15 L30 10 L40 12 L50 8 L60 5" stroke="#00FF88" stroke-width="2" fill="none"/>
+                        </svg>
+                    </div>
+                    <div class="market-price">
+                        <div class="price-value">$2.45</div>
+                        <div class="price-change change-positive">+12.5%</div>
+                    </div>
+                </div>
+                
+                <div class="market-item">
+                    <div class="market-position">2</div>
+                    <div class="market-asset">
+                        <div class="asset-icon token">BTC</div>
+                        <div class="asset-info">
+                            <div class="asset-name">BTC</div>
+                            <div class="asset-symbol">Bitcoin</div>
+                        </div>
+                    </div>
+                    <div class="market-chart">
+                        <svg width="60" height="30" viewBox="0 0 60 30" fill="none">
+                            <path d="M0 15 L10 12 L20 18 L30 14 L40 16 L50 12 L60 10" stroke="#FF3B3B" stroke-width="2" fill="none"/>
+                        </svg>
+                    </div>
+                    <div class="market-price">
+                        <div class="price-value">$45,000</div>
+                        <div class="price-change change-negative">-2.1%</div>
+                    </div>
+                </div>
+                
+                <div class="market-item">
+                    <div class="market-position">3</div>
+                    <div class="market-asset">
+                        <div class="asset-icon token">ETH</div>
+                        <div class="asset-info">
+                            <div class="asset-name">ETH</div>
+                            <div class="asset-symbol">Ethereum</div>
+                        </div>
+                    </div>
+                    <div class="market-chart">
+                        <svg width="60" height="30" viewBox="0 0 60 30" fill="none">
+                            <path d="M0 18 L10 15 L20 12 L30 14 L40 10 L50 8 L60 6" stroke="#00FF88" stroke-width="2" fill="none"/>
+                        </svg>
+                    </div>
+                    <div class="market-price">
+                        <div class="price-value">$3,200</div>
+                        <div class="price-change change-positive">+5.8%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Explore Screen -->
+    <div id="explore-screen" class="screen">
+        <div class="header">
+            <div style="width: 40px;"></div>
+            <div class="header-title">Explore</div>
+            <div style="width: 40px;"></div>
+        </div>
+        
+        <div class="content">
+            <!-- DeFi Services -->
+            <div class="section-header">
+                <h3 class="section-title">DeFi Services</h3>
+            </div>
+            
+            <div class="service-grid">
+                <div class="service-card" onclick="showScreen('staking-screen')">
+                    <div class="service-icon">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                            <circle cx="16" cy="16" r="15" stroke="currentColor" stroke-width="2"/>
+                            <path d="M16 8v8l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="service-name">Staking</div>
+                    <div class="service-apy">12.5% APY</div>
+                </div>
+                
+                <div class="service-card" onclick="showScreen('liquidity-screen')">
+                    <div class="service-icon">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                            <circle cx="12" cy="16" r="8" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="20" cy="16" r="8" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <div class="service-name">Liquidity</div>
+                    <div class="service-apy">24.8% APR</div>
+                </div>
+                
+                <div class="service-card" onclick="showScreen('governance-screen')">
+                    <div class="service-icon">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                            <path d="M16 4l-8 8v8c0 8 8 12 8 12s8-4 8-12v-8l-8-8z" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <div class="service-name">Governance</div>
+                    <div class="service-apy">Vote</div>
+                </div>
+                
+                <div class="service-card" onclick="showScreen('lending-screen')">
+                    <div class="service-icon">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                            <path d="M8 16h16M8 12h16M8 20h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="service-name">Lending</div>
+                    <div class="service-apy">8.2% APY</div>
+                </div>
+            </div>
+            
+            <!-- Discover dApps -->
+            <div class="section-header">
+                <h3 class="section-title">Discover dApps</h3>
+                <a href="#" class="section-link">Browse All</a>
+            </div>
+            
+            <div class="dapp-categories">
+                <button class="category-chip active">All</button>
+                <button class="category-chip">DeFi</button>
+                <button class="category-chip">Games</button>
+                <button class="category-chip">NFTs</button>
+                <button class="category-chip">Social</button>
+            </div>
+            
+            <div class="dapp-list">
+                <div class="dapp-card">
+                    <div class="dapp-icon">🎮</div>
+                    <div class="dapp-info">
+                        <div class="dapp-name">CTC Arena</div>
+                        <div class="dapp-category">Gaming</div>
+                    </div>
+                    <button class="dapp-action">Open</button>
+                </div>
+                
+                <div class="dapp-card">
+                    <div class="dapp-icon">🎨</div>
+                    <div class="dapp-info">
+                        <div class="dapp-name">NFT Market</div>
+                        <div class="dapp-category">Marketplace</div>
+                    </div>
+                    <button class="dapp-action">Open</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Screen -->
+    <div id="settings-screen" class="screen">
+        <div class="header">
+            <div style="width: 40px;"></div>
+            <div class="header-title">Settings</div>
+            <div style="width: 40px;"></div>
+        </div>
+        
+        <div class="content">
+            <!-- Profile Section -->
+            <div class="profile-section">
+                <div class="profile-avatar">
+                    <div class="avatar-gradient">W1</div>
+                </div>
+                <div class="profile-info">
+                    <h3 class="profile-name">Wallet 1</h3>
+                    <p class="profile-address">ctc1q...mxuh</p>
+                </div>
+                <button class="edit-button" onclick="editProfile()">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14.5 2.5a2.121 2.121 0 013 3L6 17l-4 1 1-4L14.5 2.5z"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Settings Sections -->
+            <div class="settings-section">
+                <div class="settings-title">Security</div>
+                
+                <div class="settings-item" onclick="toggleBiometric()">
+                    <div class="settings-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 11v4m0 0l-2-2m2 2l2-2M8 7a4 4 0 118 0M3 21v-2a4 4 0 014-4h10a4 4 0 014 4v2"/>
+                        </svg>
+                    </div>
+                    <div class="settings-info">
+                        <div class="settings-label">Biometric Authentication</div>
+                        <div class="settings-description">Use Face ID or Touch ID</div>
+                    </div>
+                    <div class="toggle-switch active" id="biometric-toggle">
+                        <div class="toggle-knob"></div>
+                    </div>
+                </div>
+                
+                <div class="settings-item" onclick="showScreen('change-pin-screen')">
+                    <div class="settings-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="10" rx="2"/>
+                            <path d="M7 11V7a5 5 0 0110 0v4"/>
+                        </svg>
+                    </div>
+                    <div class="settings-info">
+                        <div class="settings-label">Change PIN</div>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 10h10m-5-5l5 5-5 5"/>
+                    </svg>
+                </div>
+                
+                <div class="settings-item" onclick="showSeedPhrase()">
+                    <div class="settings-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                    </div>
+                    <div class="settings-info">
+                        <div class="settings-label">Recovery Phrase</div>
+                        <div class="settings-description">Backup your wallet</div>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 10h10m-5-5l5 5-5 5"/>
+                    </svg>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <div class="settings-title">Preferences</div>
+                
+                <div class="settings-item" onclick="showScreen('currency-screen')">
+                    <div class="settings-icon">💵</div>
+                    <div class="settings-info">
+                        <div class="settings-label">Currency</div>
+                        <div class="settings-description">USD</div>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 10h10m-5-5l5 5-5 5"/>
+                    </svg>
+                </div>
+                
+                <div class="settings-item" onclick="showScreen('language-screen')">
+                    <div class="settings-icon">🌐</div>
+                    <div class="settings-info">
+                        <div class="settings-label">Language</div>
+                        <div class="settings-description">English</div>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 10h10m-5-5l5 5-5 5"/>
+                    </svg>
+                </div>
+                
+                <div class="settings-item" onclick="toggleNotifications()">
+                    <div class="settings-icon">🔔</div>
+                    <div class="settings-info">
+                        <div class="settings-label">Push Notifications</div>
+                        <div class="settings-description">Transaction alerts</div>
+                    </div>
+                    <div class="toggle-switch active" id="notifications-toggle">
+                        <div class="toggle-knob"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <div class="settings-title">About</div>
+                
+                <div class="settings-item" onclick="showScreen('about-screen')">
+                    <div class="settings-icon">ℹ️</div>
+                    <div class="settings-info">
+                        <div class="settings-label">About CTC Wallet</div>
+                        <div class="settings-description">Version 2.0.0</div>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 10h10m-5-5l5 5-5 5"/>
+                    </svg>
+                </div>
+                
+                <div class="settings-item" onclick="showSupport()">
+                    <div class="settings-icon">💬</div>
+                    <div class="settings-info">
+                        <div class="settings-label">Support</div>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 10h10m-5-5l5 5-5 5"/>
+                    </svg>
+                </div>
+            </div>
+            
+            <button class="btn btn-ghost" style="color: var(--error); margin-top: var(--space-8);" onclick="logout()">
+                Sign Out
+            </button>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav" id="bottom-nav">
+        <a href="#" class="nav-item active" onclick="switchTab('dashboard'); return false;">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+            </svg>
+            <span class="nav-label">Portfolio</span>
+        </a>
+        
+        <a href="#" class="nav-item" onclick="switchTab('markets'); return false;">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            </svg>
+            <span class="nav-label">Markets</span>
+        </a>
+        
+        <a href="#" class="nav-item" onclick="switchTab('explore'); return false;">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="M21 21l-4.35-4.35"/>
+                <path d="M11 8v3l2 1"/>
+            </svg>
+            <span class="nav-label">Explore</span>
+        </a>
+        
+        <a href="#" class="nav-item" onclick="switchTab('settings'); return false;">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1m20.5-4.5L17 12l4.5 4.5M3.5 7.5L8 12l-4.5 4.5"/>
+            </svg>
+            <span class="nav-label">Settings</span>
+        </a>
+    </nav>
+
+    <!-- Toast Container -->
+    <div id="toast" class="toast">
+        <div class="toast-content">
+            <svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 11l3 3L22 4"/>
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+            </svg>
+            <span class="toast-message" id="toast-message">Action completed</span>
+        </div>
+    </div>
+
+    <!-- Style additions for new components -->
+    <style>
+        /* Welcome Screen */
+        .welcome-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: var(--space-6);
+            text-align: center;
+        }
+        
+        .welcome-illustration {
+            margin-bottom: var(--space-8);
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .feature-cards {
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: var(--space-8);
+        }
+        
+        .feature-card {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            padding: var(--space-5);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-3);
+            transition: all var(--transition-base);
+        }
+        
+        .feature-card:hover {
+            background: var(--glass-hover);
+            transform: translateX(4px);
+        }
+        
+        .feature-icon {
+            font-size: 32px;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+        }
+        
+        .feature-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        
+        .feature-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .welcome-actions {
+            width: 100%;
+            max-width: 360px;
+        }
+        
+        .welcome-actions .btn {
+            margin-bottom: var(--space-3);
+        }
+        
+        /* Security Badge */
+        .security-badge {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto var(--space-6);
+            position: relative;
+        }
+        
+        .security-badge::after {
+            content: '';
+            position: absolute;
+            inset: -20px;
+            background: var(--accent-gradient);
+            opacity: 0.1;
+            border-radius: var(--radius-full);
+            filter: blur(20px);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.1; }
+            50% { transform: scale(1.1); opacity: 0.2; }
+        }
+        
+        /* Modern Cards */
+        .warning-card {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-4);
+            padding: var(--space-5);
+            background: var(--error-bg);
+            border: 1px solid rgba(255, 59, 59, 0.2);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-6);
+        }
+        
+        .warning-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .warning-content h4 {
+            margin-bottom: var(--space-1);
+        }
+        
+        /* Seed Phrase */
+        .seed-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-3);
+            margin-bottom: var(--space-6);
+        }
+        
+        .seed-word {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            padding: var(--space-3);
+            text-align: center;
+            position: relative;
+            transition: all var(--transition-fast);
+        }
+        
+        .seed-word:hover {
+            background: var(--bg-hover);
+            transform: translateY(-1px);
+        }
+        
+        .seed-number {
+            position: absolute;
+            top: 6px;
+            left: 8px;
+            font-size: 10px;
+            color: var(--text-tertiary);
+            font-weight: 600;
+        }
+        
+        .seed-text {
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'SF Mono', 'Monaco', monospace;
+        }
+        
+        .seed-actions {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+            margin-bottom: var(--space-6);
+        }
+        
+        .security-note {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-1);
+        }
+        
+        /* Auth Screen */
+        .auth-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: var(--space-6);
+            text-align: center;
+        }
+        
+        .auth-logo {
+            margin-bottom: var(--space-6);
+            position: relative;
+        }
+        
+        /* Portfolio Chart */
+        .portfolio-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-3);
+        }
+        
+        .portfolio-menu {
+            cursor: pointer;
+            opacity: 0.5;
+            transition: opacity var(--transition-fast);
+        }
+        
+        .portfolio-menu:hover {
+            opacity: 1;
+        }
+        
+        .portfolio-chart {
+            margin-top: var(--space-5);
+            height: 120px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .change-period {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-left: var(--space-2);
+        }
+        
+        /* Modern Input Styles */
+        .balance-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-3);
+            font-size: 14px;
+        }
+        
+        .balance-label {
+            color: var(--text-secondary);
+        }
+        
+        .balance-amount {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .amount-presets {
+            display: flex;
+            gap: var(--space-2);
+            margin-top: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+        
+        .preset-button {
+            flex: 1;
+            padding: var(--space-2) var(--space-3);
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .preset-button:hover {
+            background: var(--bg-hover);
+            color: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+        
+        /* Contact Button */
+        .contacts-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: var(--space-2);
+            color: var(--text-secondary);
+            transition: all var(--transition-fast);
+        }
+        
+        .contacts-button:hover {
+            color: var(--accent-primary);
+        }
+        
+        /* Fee Section */
+        .fee-section {
+            margin-bottom: var(--space-6);
+        }
+        
+        .fee-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-3);
+        }
+        
+        .fee-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .fee-customize {
+            font-size: 14px;
+            color: var(--accent-primary);
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        /* Transaction Summary */
+        .transaction-summary {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            margin-bottom: var(--space-6);
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-2) 0;
+            font-size: 14px;
+        }
+        
+        .summary-row span:first-child {
+            color: var(--text-secondary);
+        }
+        
+        .summary-divider {
+            height: 1px;
+            background: var(--glass-border);
+            margin: var(--space-3) 0;
+        }
+        
+        .summary-total {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        /* Review Screen */
+        .confirm-content {
+            padding-top: var(--space-6);
+        }
+        
+        .review-header {
+            text-align: center;
+            margin-bottom: var(--space-6);
+        }
+        
+        .review-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto var(--space-4);
+        }
+        
+        .review-amount {
+            text-align: center;
+            margin-bottom: var(--space-6);
+        }
+        
+        .amount-large {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: var(--space-2);
+        }
+        
+        .amount-usd {
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+        
+        .review-details {
+            margin-bottom: var(--space-6);
+        }
+        
+        .detail-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+        }
+        
+        .detail-label {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: var(--space-2);
+        }
+        
+        .wallet-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+        
+        .wallet-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-hover);
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .wallet-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        
+        .wallet-address {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-family: monospace;
+        }
+        
+        .detail-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+            color: var(--text-tertiary);
+        }
+        
+        .fee-summary {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+        
+        .fee-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-2) 0;
+            font-size: 14px;
+        }
+        
+        .fee-row span:first-child {
+            color: var(--text-secondary);
+        }
+        
+        .confirm-actions {
+            display: flex;
+            gap: var(--space-3);
+        }
+        
+        .confirm-actions .btn {
+            flex: 1;
+        }
+        
+        /* Success Animation */
+        .success-animation {
+            margin-bottom: var(--space-6);
+        }
+        
+        .transaction-details-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            margin-bottom: var(--space-6);
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-3) 0;
+        }
+        
+        .detail-row:not(:last-child) {
+            border-bottom: 1px solid var(--glass-border);
+        }
+        
+        .detail-value {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        
+        .tx-hash {
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .copy-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: var(--space-1);
+            color: var(--text-secondary);
+            transition: all var(--transition-fast);
+        }
+        
+        .copy-button:hover {
+            color: var(--accent-primary);
+        }
+        
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-1) var(--space-3);
+            background: var(--warning-bg);
+            color: var(--warning);
+            border-radius: var(--radius-full);
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .status-badge.confirmed {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+        
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: currentColor;
+            border-radius: var(--radius-full);
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .success-actions {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+        
+        /* Receive Screen */
+        .receive-content {
+            padding-top: var(--space-6);
+        }
+        
+        .wallet-selector {
+            margin-bottom: var(--space-6);
+        }
+        
+        .wallet-option {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            padding: var(--space-4);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .wallet-option.active {
+            background: var(--bg-card);
+            border-color: var(--accent-primary);
+        }
+        
+        .wallet-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--accent-gradient);
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: #000;
+        }
+        
+        .wallet-network {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+        
+        /* QR Code */
+        .qr-container {
+            position: relative;
+            background: white;
+            padding: var(--space-6);
+            border-radius: var(--radius-xl);
+            margin: 0 auto var(--space-6);
+            width: fit-content;
+        }
+        
+        .qr-code {
+            width: 200px;
+            height: 200px;
+        }
+        
+        .qr-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .logo-circle {
+            width: 48px;
+            height: 48px;
+            background: white;
+            border: 3px solid white;
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--accent-primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .address-section {
+            text-align: center;
+        }
+        
+        .address-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-2);
+        }
+        
+        .address-display {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            margin-bottom: var(--space-4);
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 14px;
+            user-select: all;
+        }
+        
+        .address-actions {
+            display: flex;
+            gap: var(--space-3);
+        }
+        
+        .address-actions .btn {
+            flex: 1;
+        }
+        
+        .receive-note {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-2);
+            padding: var(--space-4);
+            background: var(--info-bg);
+            border-radius: var(--radius-lg);
+            margin-top: var(--space-6);
+            font-size: 13px;
+            color: var(--info);
+        }
+        
+        /* Markets Screen */
+        .header-search {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: 0 var(--space-4);
+        }
+        
+        .search-input {
+            flex: 1;
+            background: none;
+            border: none;
+            font-size: 16px;
+            color: var(--text-primary);
+            outline: none;
+        }
+        
+        .search-input::placeholder {
+            color: var(--text-tertiary);
+        }
+        
+        .market-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-3);
+            margin-bottom: var(--space-6);
+        }
+        
+        .stat-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            text-align: center;
+            transition: all var(--transition-fast);
+        }
+        
+        .stat-card:hover {
+            background: var(--glass-hover);
+            transform: translateY(-1px);
+        }
+        
+        .stat-icon {
+            font-size: 24px;
+            margin-bottom: var(--space-2);
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-bottom: var(--space-1);
+        }
+        
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: var(--space-1);
+        }
+        
+        .stat-change {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .market-tabs {
+            display: flex;
+            gap: var(--space-2);
+            margin-bottom: var(--space-5);
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        
+        .market-tabs::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .tab-button {
+            padding: var(--space-2) var(--space-4);
+            background: none;
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-full);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            white-space: nowrap;
+        }
+        
+        .tab-button:hover {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+        }
+        
+        .tab-button.active {
+            background: var(--accent-gradient);
+            color: #000;
+            border-color: transparent;
+        }
+        
+        .market-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+        
+        .market-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-4);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .market-item:hover {
+            background: var(--glass-hover);
+            transform: translateX(2px);
+        }
+        
+        .market-position {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            width: 20px;
+        }
+        
+        .market-asset {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            flex: 1;
+        }
+        
+        .market-chart {
+            width: 60px;
+            height: 30px;
+        }
+        
+        .market-price {
+            text-align: right;
+        }
+        
+        .price-value {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        
+        .price-change {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        /* Explore Screen */
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-3);
+            margin-bottom: var(--space-7);
+        }
+        
+        .service-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-base);
+        }
+        
+        .service-card:hover {
+            background: var(--glass-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .service-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto var(--space-3);
+            color: var(--accent-primary);
+        }
+        
+        .service-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: var(--space-1);
+        }
+        
+        .service-apy {
+            font-size: 14px;
+            color: var(--success);
+            font-weight: 600;
+        }
+        
+        .dapp-categories {
+            display: flex;
+            gap: var(--space-2);
+            margin-bottom: var(--space-5);
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        
+        .dapp-categories::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .category-chip {
+            padding: var(--space-2) var(--space-4);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-full);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            white-space: nowrap;
+        }
+        
+        .category-chip:hover {
+            background: var(--glass-hover);
+            color: var(--text-primary);
+        }
+        
+        .category-chip.active {
+            background: var(--accent-gradient);
+            color: #000;
+            border-color: transparent;
+        }
+        
+        .dapp-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+        
+        .dapp-card {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            padding: var(--space-4);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            transition: all var(--transition-fast);
+        }
+        
+        .dapp-card:hover {
+            background: var(--glass-hover);
+            transform: translateX(2px);
+        }
+        
+        .dapp-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .dapp-info {
+            flex: 1;
+        }
+        
+        .dapp-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        
+        .dapp-category {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .dapp-action {
+            padding: var(--space-2) var(--space-4);
+            background: var(--accent-gradient);
+            color: #000;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .dapp-action:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Settings Screen */
+        .profile-section {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            padding: var(--space-6);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            margin-bottom: var(--space-6);
+        }
+        
+        .profile-avatar {
+            width: 64px;
+            height: 64px;
+        }
+        
+        .avatar-gradient {
+            width: 100%;
+            height: 100%;
+            background: var(--accent-gradient);
+            border-
