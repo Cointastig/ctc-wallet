@@ -2,19 +2,35 @@
   "version": 2,
   "builds": [
     {
-      "src": "src/index.html",
+      "src": "src/**",
       "use": "@vercel/static"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "/src/$1"
+      "source": "/",
+      "destination": "/src/index.html"
+    },
+    {
+      "source": "/sw.js",
+      "destination": "/src/sw.js"
+    },
+    {
+      "source": "/manifest.json",
+      "destination": "/src/manifest.json"
+    },
+    {
+      "source": "/app.js",
+      "destination": "/src/app.js"
+    },
+    {
+      "source": "/styles.css",
+      "destination": "/src/styles.css"
     }
   ],
   "headers": [
     {
-      "source": "/src/(.*)",
+      "source": "/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -43,7 +59,7 @@
       ]
     },
     {
-      "source": "/src/sw.js",
+      "source": "/sw.js",
       "headers": [
         {
           "key": "Service-Worker-Allowed",
@@ -56,23 +72,13 @@
       ]
     },
     {
-      "source": "/src/manifest.json",
+      "source": "/manifest.json",
       "headers": [
         {
           "key": "Content-Type",
           "value": "application/manifest+json"
         }
       ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/sw.js",
-      "destination": "/src/sw.js"
-    },
-    {
-      "source": "/manifest.json",
-      "destination": "/src/manifest.json"
     }
   ]
 }
