@@ -2153,4 +2153,219 @@
             width: 100%;
             height: 100%;
             background: var(--accent-gradient);
-            border-
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: #000;
+        }
+        
+        .profile-info {
+            flex: 1;
+        }
+        
+        .profile-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        
+        .profile-address {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-family: monospace;
+        }
+        
+        .edit-button {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .edit-button:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent-primary);
+        }
+        
+        .settings-section {
+            margin-bottom: var(--space-7);
+        }
+        
+        .settings-title {
+            font-size: 14px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: var(--space-4);
+            padding: 0 var(--space-5);
+        }
+        
+        .settings-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            padding: var(--space-4) var(--space-5);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            border-radius: var(--radius-lg);
+        }
+        
+        .settings-item:hover {
+            background: var(--glass-bg);
+        }
+        
+        .settings-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+        
+        .settings-info {
+            flex: 1;
+        }
+        
+        .settings-label {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        
+        .settings-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        /* Input Container for Send Screen */
+        .input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .input-addon {
+            position: absolute;
+            right: var(--space-2);
+        }
+        
+        /* Fee Selector */
+        .fee-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-3);
+        }
+        
+        .fee-option {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .fee-option:hover {
+            background: var(--glass-hover);
+            transform: translateY(-1px);
+        }
+        
+        .fee-option.selected {
+            background: var(--bg-card);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 1px var(--accent-primary);
+        }
+        
+        .fee-speed {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: var(--space-2);
+        }
+        
+        .fee-amount {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent-primary);
+            margin-bottom: var(--space-1);
+        }
+        
+        .fee-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        /* Splash Screen */
+        .splash-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+        }
+        
+        .logo-container {
+            margin-bottom: var(--space-8);
+        }
+        
+        .logo-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto;
+            animation: rotate 20s linear infinite;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .splash-title {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: var(--space-2);
+            letter-spacing: -0.02em;
+        }
+        
+        .splash-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-8);
+        }
+        
+        /* Create Wallet Content */
+        .create-wallet-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            padding: var(--space-6);
+            text-align: center;
+        }
+        
+        /* Send Content */
+        .send-content {
+            padding-top: var(--space-6);
+        }
+        
+        .amount-section {
+            margin-bottom: var(--space-6);
+        }
+    </style>
+
+    <!-- Load JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
