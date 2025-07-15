@@ -65,9 +65,9 @@ const NETWORK_CONFIG = {
 };
 
 const FEE_OPTIONS = {
-    slow: { amount: 0.001, time: '~10 min', gasPrice: 1, emoji: '🐢' },
-    normal: { amount: 0.01, time: '~3 min', gasPrice: 5, emoji: '⚡' },
-    fast: { amount: 0.1, time: '~30 sec', gasPrice: 10, emoji: '🚀' }
+    slow: { amount: 0.001, time: '~1 min', gasPrice: 1, emoji: '🐢' },
+    normal: { amount: 0.01, time: '~10 sec', gasPrice: 5, emoji: '⚡' },
+    fast: { amount: 0.1, time: '~1 sec', gasPrice: 10, emoji: '🚀' }
 };
 
 // Initialize app with modern setup
