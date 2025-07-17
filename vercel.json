@@ -26,6 +26,26 @@
     {
       "source": "/styles.css",
       "destination": "/src/styles.css"
+    },
+    {
+      "source": "/logo.png",
+      "destination": "/src/assets/logo.png"
+    },
+    {
+      "source": "/icon-192.png",
+      "destination": "/src/assets/icon-192.png"
+    },
+    {
+      "source": "/icon-512.png",
+      "destination": "/src/assets/icon-512.png"
+    },
+    {
+      "source": "/icon-1024.png",
+      "destination": "/src/assets/icon-1024.png"
+    },
+    {
+      "source": "/favicon.ico",
+      "destination": "/src/assets/favicon.ico"
     }
   ],
   "headers": [
@@ -54,7 +74,11 @@
         },
         {
           "key": "Permissions-Policy",
-          "value": "camera=(), microphone=(), geolocation=()"
+          "value": "camera=(self), microphone=(), geolocation=()"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://api.coingecko.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: https://cryptologos.cc; connect-src 'self' https://api.coingecko.com https://rpc.ctc.network"
         }
       ]
     },
@@ -79,6 +103,28 @@
           "value": "application/manifest+json"
         }
       ]
+    },
+    {
+      "source": "/(.*).png",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*).ico",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     }
-  ]
+  ],
+  "regions": ["fra1", "iad1", "sin1"],
+  "github": {
+    "silent": true
+  }
 }
