@@ -1,4 +1,4 @@
-// CTC Wallet - Tonkeeper-inspired Modern Implementation
+// CTC Wallet - Tonkeeper-inspired Modern Implementation with Biometric Authentication
 const AppState = {
     currentScreen: 'splash-screen',
     pin: '',
@@ -21,9 +21,7 @@ const AppState = {
     language: 'en',
     contactsList: [],
     stakingPositions: [],
-    importMethod: 'phrase',
-    biometricPublicKey: null,  // Added for biometric authentication
-    biometricChallenge: null   // Added for biometric authentication
+    importMethod: 'phrase'
 };
 
 // Network Configuration
@@ -75,14 +73,8 @@ async function initializeApp() {
     // Initialize event listeners
     initializeEventListeners();
     
-    // Load biometric key if exists
-    const storedKey = localStorage.getItem('ctc_biometric_key');
-    if (storedKey) {
-        AppState.biometricPublicKey = JSON.parse(storedKey);
-        if (AppState.walletData) {
-            AppState.walletData.settings.biometric = true;
-        }
-    }
+    // Check biometric availability
+    checkBiometricAvailability();
     
     // Show appropriate screen after splash
     setTimeout(() => {
@@ -96,6 +88,27 @@ async function initializeApp() {
     // Start market updates
     if (AppState.walletData) {
         startMarketUpdates();
+    }
+}
+
+// Check if biometric authentication is available
+async function checkBiometricAvailability() {
+    try {
+        // Check for WebAuthn support
+        if (window.PublicKeyCredential) {
+            // Check if platform authenticator is available (Touch ID, Face ID, Windows Hello)
+            const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+            if (available) {
+                console.log('Biometric authentication is available');
+            }
+        }
+        
+        // Fallback: Check for Touch ID / Face ID on iOS
+        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.touchID) {
+            console.log('iOS Touch ID/Face ID is available');
+        }
+    } catch (error) {
+        console.log('Biometric authentication check failed:', error);
     }
 }
 
@@ -114,12 +127,22 @@ function loadSavedData() {
     const savedTheme = localStorage.getItem('ctc_theme');
     if (savedTheme) {
         AppState.theme = savedTheme;
+        applyTheme(savedTheme);
     }
     
     const savedCurrency = localStorage.getItem('ctc_currency');
     if (savedCurrency) {
         AppState.currency = savedCurrency;
     }
+}
+
+// Apply theme
+function applyTheme(theme) {
+    document.body.setAttribute('data-theme', theme);
+    
+    // Update theme color meta tag
+    const themeColor = theme === 'dark' ? '#0A0B0F' : '#FFFFFF';
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', themeColor);
 }
 
 // Initialize event listeners
@@ -317,130 +340,194 @@ function authenticatePin() {
     }
 }
 
-// Biometric Authentication
-async function registerBiometric() {
-    try {
-        // Generate random challenge
-        const challenge = new Uint8Array(32);
-        window.crypto.getRandomValues(challenge);
-        AppState.biometricChallenge = challenge;
-
-        // Create public key credential options
-        const publicKey = {
-            challenge: challenge,
-            rp: {
-                name: "CTC Wallet",
-                id: window.location.hostname
-            },
-            user: {
-                id: new Uint8Array(16),
-                name: AppState.walletData.address,
-                displayName: "CTC User"
-            },
-            pubKeyCredParams: [
-                { type: "public-key", alg: -7 },  // ES256
-                { type: "public-key", alg: -257 } // RS256
-            ],
-            authenticatorSelection: {
-                userVerification: "required",
-                requireResidentKey: true
-            },
-            timeout: 60000,
-            attestation: "direct"
-        };
-
-        // Create new credential
-        const credential = await navigator.credentials.create({
-            publicKey: publicKey
-        });
-
-        // Store public key
-        AppState.biometricPublicKey = {
-            id: credential.id,
-            rawId: Array.from(new Uint8Array(credential.rawId)),
-            type: credential.type,
-            response: {
-                attestationObject: Array.from(new Uint8Array(credential.response.attestationObject)),
-                clientDataJSON: Array.from(new Uint8Array(credential.response.clientDataJSON))
-            }
-        };
-
-        // Save to localStorage
-        localStorage.setItem('ctc_biometric_key', JSON.stringify(AppState.biometricPublicKey));
-        
-        return true;
-    } catch (error) {
-        console.error('Biometric registration failed:', error);
-        showToast('Biometric setup failed', 'error');
-        return false;
-    }
-}
-
+// Biometric Authentication with WebAuthn
 async function authenticateBiometric() {
-    if (!AppState.walletData || !AppState.walletData.settings.biometric) {
+    if (!AppState.walletData.settings.biometric) {
         showToast('Biometric authentication is disabled', 'info');
         return;
     }
     
     try {
-        // Load stored public key
-        const storedKey = localStorage.getItem('ctc_biometric_key');
-        if (!storedKey) {
-            showToast('No biometric credentials found', 'error');
-            return;
+        // Check if WebAuthn is supported
+        if (!window.PublicKeyCredential) {
+            // Fallback to native biometric APIs if available
+            return await authenticateNativeBiometric();
         }
         
-        const publicKeyCredential = JSON.parse(storedKey);
-        const allowCredentials = [{
-            id: Uint8Array.from(publicKeyCredential.rawId),
-            type: 'public-key',
-            transports: ['internal']
-        }];
+        showToast('Authenticating...', 'info');
+        
+        // Check if credential exists
+        const credentialId = localStorage.getItem('ctc_biometric_credential');
+        
+        if (!credentialId) {
+            // First time - register biometric
+            const registered = await registerBiometric();
+            if (registered) {
+                loginWithBiometric();
+            }
+        } else {
+            // Authenticate with existing credential
+            await verifyBiometric(credentialId);
+        }
+    } catch (error) {
+        console.error('Biometric authentication error:', error);
+        showToast('Authentication failed. Please use PIN.', 'error');
+    }
+}
 
-        // Generate new challenge
+// Register biometric credential
+async function registerBiometric() {
+    try {
         const challenge = new Uint8Array(32);
-        window.crypto.getRandomValues(challenge);
-        AppState.biometricChallenge = challenge;
-
-        // Create authentication options
-        const publicKey = {
+        crypto.getRandomValues(challenge);
+        
+        const userId = new TextEncoder().encode(AppState.walletData.address);
+        
+        const publicKeyCredentialCreationOptions = {
             challenge: challenge,
-            allowCredentials: allowCredentials,
-            userVerification: 'required',
+            rp: {
+                name: "CTC Wallet",
+                id: window.location.hostname === 'localhost' ? 'localhost' : window.location.hostname
+            },
+            user: {
+                id: userId,
+                name: "wallet_user",
+                displayName: "CTC Wallet User"
+            },
+            pubKeyCredParams: [
+                { alg: -7, type: "public-key" },  // ES256
+                { alg: -257, type: "public-key" } // RS256
+            ],
+            authenticatorSelection: {
+                authenticatorAttachment: "platform",
+                userVerification: "required"
+            },
+            timeout: 60000,
+            attestation: "none"
+        };
+        
+        const credential = await navigator.credentials.create({
+            publicKey: publicKeyCredentialCreationOptions
+        });
+        
+        if (credential) {
+            // Store credential ID
+            const credentialId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+            localStorage.setItem('ctc_biometric_credential', credentialId);
+            
+            // Store public key and other data for verification
+            const credentialData = {
+                credentialId: credentialId,
+                publicKey: btoa(String.fromCharCode(...new Uint8Array(credential.response.publicKey))),
+                type: credential.type
+            };
+            localStorage.setItem('ctc_biometric_data', JSON.stringify(credentialData));
+            
+            showToast('Biometric registration successful', 'success');
+            return true;
+        }
+    } catch (error) {
+        console.error('Biometric registration error:', error);
+        if (error.name === 'NotAllowedError') {
+            showToast('Biometric registration was cancelled', 'info');
+        } else {
+            showToast('Failed to register biometric', 'error');
+        }
+        return false;
+    }
+}
+
+// Verify biometric credential
+async function verifyBiometric(credentialId) {
+    try {
+        const challenge = new Uint8Array(32);
+        crypto.getRandomValues(challenge);
+        
+        const publicKeyCredentialRequestOptions = {
+            challenge: challenge,
+            allowCredentials: [{
+                id: Uint8Array.from(atob(credentialId), c => c.charCodeAt(0)),
+                type: 'public-key',
+                transports: ['internal']
+            }],
+            userVerification: "required",
             timeout: 60000
         };
-
-        // Authenticate with biometric
-        const assertion = await navigator.credentials.get({
-            publicKey: publicKey
-        });
-
-        // If we get here, authentication was successful
-        showScreen('dashboard-screen');
-        showToast('Authentication successful', 'success');
-        startMarketUpdates();
-    } catch (error) {
-        console.error('Biometric authentication failed:', error);
         
-        // Handle specific errors
+        const assertion = await navigator.credentials.get({
+            publicKey: publicKeyCredentialRequestOptions
+        });
+        
+        if (assertion) {
+            // Authentication successful
+            loginWithBiometric();
+        }
+    } catch (error) {
+        console.error('Biometric verification error:', error);
         if (error.name === 'NotAllowedError') {
-            showToast('Authentication canceled by user', 'error');
-        } else if (error.name === 'AbortError') {
-            showToast('Authentication timed out', 'error');
-        } else if (error.name === 'NotSupportedError') {
-            showToast('Biometric authentication not supported', 'error');
+            showToast('Biometric authentication was cancelled', 'info');
         } else {
             showToast('Biometric authentication failed', 'error');
         }
     }
 }
 
+// Native biometric authentication fallback
+async function authenticateNativeBiometric() {
+    try {
+        // Check for iOS TouchID/FaceID via webkit
+        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.touchID) {
+            window.webkit.messageHandlers.touchID.postMessage({
+                action: 'authenticate',
+                reason: 'Authenticate to access your CTC Wallet'
+            });
+            return;
+        }
+        
+        // For Android, try using the Credential Management API
+        if ('credentials' in navigator && 'preventSilentAccess' in navigator.credentials) {
+            const credential = await navigator.credentials.get({
+                password: true,
+                federated: {
+                    providers: []
+                }
+            });
+            
+            if (credential) {
+                loginWithBiometric();
+                return;
+            }
+        }
+        
+        showToast('Biometric authentication not available', 'error');
+    } catch (error) {
+        console.error('Native biometric error:', error);
+        showToast('Biometric authentication failed', 'error');
+    }
+}
+
+// Login after successful biometric authentication
+function loginWithBiometric() {
+    showScreen('dashboard-screen');
+    showToast('Authentication successful', 'success');
+    startMarketUpdates();
+}
+
+// Handle iOS biometric response
+window.handleTouchIDResponse = function(success) {
+    if (success) {
+        loginWithBiometric();
+    } else {
+        showToast('Biometric authentication failed', 'error');
+    }
+};
+
 function forgotPin() {
     if (confirm('This will reset your wallet. You will need your recovery phrase to restore it. Continue?')) {
         localStorage.removeItem('ctc_wallet');
-        localStorage.removeItem('ctc_biometric_key');
+        localStorage.removeItem('ctc_biometric_credential');
+        localStorage.removeItem('ctc_biometric_data');
         AppState.walletData = null;
-        AppState.biometricPublicKey = null;
         showScreen('welcome-screen');
         showToast('Wallet reset successfully', 'info');
     }
@@ -498,7 +585,7 @@ function generateSeedPhrase() {
         transactions: generateMockTransactions(),
         settings: {
             currency: 'USD',
-            biometric: false, // Default to false
+            biometric: true,
             notifications: true,
             theme: 'light',
             language: 'en'
@@ -641,7 +728,7 @@ function updateAssetList() {
     const assetList = document.getElementById('dashboard-assets');
     if (!assetList) return;
     
-    const assets = Object.entries(AppState.walletData.tokens).map(([symbol, data], index) => {
+    const assets = Object.entries(AppState.walletData.tokens).map(([symbol, data]) => {
         const price = AppState.marketData[symbol]?.price || getDefaultPrice(symbol);
         const value = parseFloat(data.balance) * price;
         const change = AppState.marketData[symbol]?.change24h || 0;
@@ -838,8 +925,8 @@ function generateQRCode() {
     if (qrContainer) {
         // Simple QR placeholder
         qrContainer.innerHTML = `
-            <div style="width: 200px; height: 200px; background: #f0f0f0; display: flex; align-items: center; justify-content: center;">
-                <span style="color: #999; font-size: 14px;">QR Code</span>
+            <div style="width: 200px; height: 200px; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center;">
+                <span style="color: var(--text-tertiary); font-size: 14px;">QR Code</span>
             </div>
         `;
     }
@@ -1012,6 +1099,7 @@ function updateSettings() {
     // Update toggle states
     const biometricToggle = document.getElementById('biometric-toggle');
     const notificationsToggle = document.getElementById('notifications-toggle');
+    const darkModeToggle = document.getElementById('darkmode-toggle');
     
     if (biometricToggle && AppState.walletData) {
         biometricToggle.classList.toggle('active', AppState.walletData.settings.biometric);
@@ -1020,41 +1108,34 @@ function updateSettings() {
     if (notificationsToggle && AppState.walletData) {
         notificationsToggle.classList.toggle('active', AppState.walletData.settings.notifications);
     }
+    
+    if (darkModeToggle) {
+        darkModeToggle.classList.toggle('active', AppState.theme === 'dark');
+    }
 }
 
-async function toggleBiometric() {
+function toggleBiometric() {
     const toggle = document.getElementById('biometric-toggle');
-    if (!toggle) return;
-    
-    if (toggle.classList.contains('active')) {
-        // Disable biometric
-        localStorage.removeItem('ctc_biometric_key');
-        AppState.biometricPublicKey = null;
-        toggle.classList.remove('active');
+    if (toggle) {
+        toggle.classList.toggle('active');
+        const isActive = toggle.classList.contains('active');
         
-        if (AppState.walletData) {
-            AppState.walletData.settings.biometric = false;
-            localStorage.setItem('ctc_wallet', JSON.stringify(AppState.walletData));
-        }
+        AppState.walletData.settings.biometric = isActive;
+        localStorage.setItem('ctc_wallet', JSON.stringify(AppState.walletData));
         
-        showToast('Biometric disabled', 'success');
-    } else {
-        // Enable biometric
-        if (!AppState.walletData) {
-            showToast('No wallet found', 'error');
-            return;
-        }
-        
-        const success = await registerBiometric();
-        if (success) {
-            toggle.classList.add('active');
-            
-            if (AppState.walletData) {
-                AppState.walletData.settings.biometric = true;
-                localStorage.setItem('ctc_wallet', JSON.stringify(AppState.walletData));
+        if (isActive) {
+            // Trigger biometric registration if enabled for the first time
+            const credentialId = localStorage.getItem('ctc_biometric_credential');
+            if (!credentialId) {
+                registerBiometric();
+            } else {
+                showToast('Biometric enabled', 'success');
             }
-            
-            showToast('Biometric enabled', 'success');
+        } else {
+            // Clear biometric data if disabled
+            localStorage.removeItem('ctc_biometric_credential');
+            localStorage.removeItem('ctc_biometric_data');
+            showToast('Biometric disabled', 'success');
         }
     }
 }
@@ -1073,6 +1154,20 @@ function toggleNotifications() {
         } else {
             showToast('Notifications disabled', 'success');
         }
+    }
+}
+
+function toggleDarkMode() {
+    const toggle = document.getElementById('darkmode-toggle');
+    if (toggle) {
+        toggle.classList.toggle('active');
+        const isActive = toggle.classList.contains('active');
+        
+        AppState.theme = isActive ? 'dark' : 'light';
+        localStorage.setItem('ctc_theme', AppState.theme);
+        applyTheme(AppState.theme);
+        
+        showToast(`${isActive ? 'Dark' : 'Light'} mode enabled`, 'success');
     }
 }
 
@@ -1343,6 +1438,7 @@ window.requestAmount = requestAmount;
 window.scanQRCode = scanQRCode;
 window.toggleBiometric = toggleBiometric;
 window.toggleNotifications = toggleNotifications;
+window.toggleDarkMode = toggleDarkMode;
 window.editProfile = editProfile;
 window.showSupport = showSupport;
 window.logout = logout;
@@ -1365,4 +1461,4 @@ window.selectSwapToAsset = selectSwapToAsset;
 window.showStakeDialog = showStakeDialog;
 window.updateAmountConversion = updateAmountConversion;
 
-console.log('CTC Wallet - Tonkeeper-inspired Edition initialized');
+console.log('CTC Wallet - Tonkeeper-inspired Edition with Biometric Authentication initialized');
