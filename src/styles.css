@@ -2002,3 +2002,242 @@ body.standalone .dashboard-header {
 @media (prefers-color-scheme: dark) {
     /* Dark mode variables can be defined here */
 }
+
+/* Dark Mode Support (Future) */
+@media (prefers-color-scheme: dark) {
+    /* Dark mode variables can be defined here */
+}
+
+/* Dark Mode Theme */
+[data-theme="dark"] {
+    /* Dark Theme Colors */
+    --bg-primary: #0A0B0F;
+    --bg-secondary: #13141A;
+    --bg-tertiary: #1C1D24;
+    --bg-card: #13141A;
+    
+    /* Dark Text Colors */
+    --text-primary: #FFFFFF;
+    --text-secondary: #8B92A4;
+    --text-tertiary: #6B7280;
+    --text-hint: #4B5563;
+    
+    /* Dark Brand Colors */
+    --brand-primary: #4B8BFF;
+    --brand-secondary: #3A7AEE;
+    --brand-light: #1A2332;
+    
+    /* Dark Status Colors */
+    --success: #34D399;
+    --success-bg: #064E3B;
+    --warning: #FBBF24;
+    --warning-bg: #451A03;
+    --error: #F87171;
+    --error-bg: #7F1D1D;
+    
+    /* Dark Shadows */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* Dark Mode Specific Overrides */
+[data-theme="dark"] .header {
+    background: var(--bg-primary);
+    border-bottom-color: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .dashboard-header {
+    background: var(--bg-primary);
+    border-bottom-color: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .bottom-nav {
+    background: var(--bg-primary);
+    border-top-color: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .toast {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--bg-secondary);
+}
+
+[data-theme="dark"] .pin-key {
+    background: var(--bg-secondary);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .pin-key:hover {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .asset-item,
+[data-theme="dark"] .transaction-item,
+[data-theme="dark"] .market-item,
+[data-theme="dark"] .settings-item,
+[data-theme="dark"] .service-card {
+    background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .asset-item:hover,
+[data-theme="dark"] .transaction-item:hover,
+[data-theme="dark"] .market-item:hover,
+[data-theme="dark"] .settings-item:hover,
+[data-theme="dark"] .service-card:hover {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .input-field,
+[data-theme="dark"] .import-textarea {
+    background: var(--bg-secondary);
+    border-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .input-field:focus,
+[data-theme="dark"] .import-textarea:focus {
+    border-color: var(--brand-primary);
+}
+
+[data-theme="dark"] .qr-code {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .tab-btn.active {
+    background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .import-tabs {
+    background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .warning-card {
+    background: var(--warning-bg);
+}
+
+[data-theme="dark"] .seed-word {
+    background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .confirm-details,
+[data-theme="dark"] .fee-summary,
+[data-theme="dark"] .transaction-info-card,
+[data-theme="dark"] .swap-card,
+[data-theme="dark"] .swap-details,
+[data-theme="dark"] .payment-method-content,
+[data-theme="dark"] .conversion-info,
+[data-theme="dark"] .profile-section,
+[data-theme="dark"] .overview-card,
+[data-theme="dark"] .address-display,
+[data-theme="dark"] .receive-note {
+    background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .fee-option {
+    background: var(--bg-secondary);
+    border-color: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .fee-option:hover {
+    border-color: var(--text-hint);
+}
+
+[data-theme="dark"] .fee-option.selected {
+    border-color: var(--brand-primary);
+    background: var(--brand-light);
+}
+
+[data-theme="dark"] .asset-selector,
+[data-theme="dark"] .swap-switch-btn {
+    background: var(--bg-secondary);
+    border-color: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .asset-selector:hover,
+[data-theme="dark"] .swap-switch-btn:hover {
+    border-color: var(--text-hint);
+}
+
+[data-theme="dark"] .security-note {
+    background: var(--brand-light);
+}
+
+[data-theme="dark"] .currency-select {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+    background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .settings-icon,
+[data-theme="dark"] .payment-icon {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .action-icon {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .swap-asset-selector {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .swap-asset-selector:hover {
+    background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .preset-btn {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .preset-btn:hover {
+    background: var(--brand-light);
+}
+
+[data-theme="dark"] .input-action {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .input-action:hover {
+    background: var(--brand-light);
+}
+
+[data-theme="dark"] .service-icon {
+    background: var(--brand-light);
+}
+
+[data-theme="dark"] .biometric-btn {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .biometric-btn:hover {
+    background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .detail-row:not(:last-child) {
+    border-bottom-color: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .summary-divider {
+    background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .qr-container {
+    background: var(--bg-secondary);
+}
+
+/* Smooth theme transition */
+* {
+    transition: background-color var(--transition-base), 
+                border-color var(--transition-base), 
+                color var(--transition-base);
+}
