@@ -51,14 +51,149 @@ const COINGECKO_API = {
     price: '/simple/price'
 };
 
-// Coin Mapping
-const COIN_MAPPING = {
-    'BTC': 'bitcoin',
-    'ETH': 'ethereum',
-    'USDT': 'tether',
-    'BNB': 'binancecoin',
-    'SOL': 'solana',
-    'CTC': 'bitcoin' // Using Bitcoin as placeholder
+// Extended Coin List with proper metadata
+const COIN_LIST = {
+    'CTC': {
+        id: 'bitcoin',
+        name: 'Community Trust Coin',
+        symbol: 'CTC',
+        color: '#2E7CF6',
+        logo: '/logo.png',
+        isLocal: true
+    },
+    'BTC': {
+        id: 'bitcoin',
+        name: 'Bitcoin',
+        symbol: 'BTC',
+        color: '#F7931A',
+        logo: 'https://cryptologos.cc/logos/bitcoin-btc-logo.svg'
+    },
+    'ETH': {
+        id: 'ethereum',
+        name: 'Ethereum',
+        symbol: 'ETH',
+        color: '#627EEA',
+        logo: 'https://cryptologos.cc/logos/ethereum-eth-logo.svg'
+    },
+    'USDT': {
+        id: 'tether',
+        name: 'Tether',
+        symbol: 'USDT',
+        color: '#26A17B',
+        logo: 'https://cryptologos.cc/logos/tether-usdt-logo.svg'
+    },
+    'BNB': {
+        id: 'binancecoin',
+        name: 'BNB',
+        symbol: 'BNB',
+        color: '#F3BA2F',
+        logo: 'https://cryptologos.cc/logos/bnb-bnb-logo.svg'
+    },
+    'SOL': {
+        id: 'solana',
+        name: 'Solana',
+        symbol: 'SOL',
+        color: '#9945FF',
+        logo: 'https://cryptologos.cc/logos/solana-sol-logo.svg'
+    },
+    'XRP': {
+        id: 'ripple',
+        name: 'XRP',
+        symbol: 'XRP',
+        color: '#23292F',
+        logo: 'https://cryptologos.cc/logos/xrp-xrp-logo.svg'
+    },
+    'USDC': {
+        id: 'usd-coin',
+        name: 'USD Coin',
+        symbol: 'USDC',
+        color: '#2775CA',
+        logo: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.svg'
+    },
+    'ADA': {
+        id: 'cardano',
+        name: 'Cardano',
+        symbol: 'ADA',
+        color: '#0033AD',
+        logo: 'https://cryptologos.cc/logos/cardano-ada-logo.svg'
+    },
+    'AVAX': {
+        id: 'avalanche-2',
+        name: 'Avalanche',
+        symbol: 'AVAX',
+        color: '#E84142',
+        logo: 'https://cryptologos.cc/logos/avalanche-avax-logo.svg'
+    },
+    'DOGE': {
+        id: 'dogecoin',
+        name: 'Dogecoin',
+        symbol: 'DOGE',
+        color: '#C2A633',
+        logo: 'https://cryptologos.cc/logos/dogecoin-doge-logo.svg'
+    },
+    'TRX': {
+        id: 'tron',
+        name: 'TRON',
+        symbol: 'TRX',
+        color: '#FF0013',
+        logo: 'https://cryptologos.cc/logos/tron-trx-logo.svg'
+    },
+    'DOT': {
+        id: 'polkadot',
+        name: 'Polkadot',
+        symbol: 'DOT',
+        color: '#E6007A',
+        logo: 'https://cryptologos.cc/logos/polkadot-new-dot-logo.svg'
+    },
+    'MATIC': {
+        id: 'matic-network',
+        name: 'Polygon',
+        symbol: 'MATIC',
+        color: '#8247E5',
+        logo: 'https://cryptologos.cc/logos/polygon-matic-logo.svg'
+    },
+    'SHIB': {
+        id: 'shiba-inu',
+        name: 'Shiba Inu',
+        symbol: 'SHIB',
+        color: '#FFA409',
+        logo: 'https://cryptologos.cc/logos/shiba-inu-shib-logo.svg'
+    },
+    'LTC': {
+        id: 'litecoin',
+        name: 'Litecoin',
+        symbol: 'LTC',
+        color: '#BFBBBB',
+        logo: 'https://cryptologos.cc/logos/litecoin-ltc-logo.svg'
+    },
+    'UNI': {
+        id: 'uniswap',
+        name: 'Uniswap',
+        symbol: 'UNI',
+        color: '#FF007A',
+        logo: 'https://cryptologos.cc/logos/uniswap-uni-logo.svg'
+    },
+    'LINK': {
+        id: 'chainlink',
+        name: 'Chainlink',
+        symbol: 'LINK',
+        color: '#2A5ADA',
+        logo: 'https://cryptologos.cc/logos/chainlink-link-logo.svg'
+    },
+    'ATOM': {
+        id: 'cosmos',
+        name: 'Cosmos',
+        symbol: 'ATOM',
+        color: '#2E3148',
+        logo: 'https://cryptologos.cc/logos/cosmos-atom-logo.svg'
+    },
+    'XLM': {
+        id: 'stellar',
+        name: 'Stellar',
+        symbol: 'XLM',
+        color: '#14B6E7',
+        logo: 'https://cryptologos.cc/logos/stellar-xlm-logo.svg'
+    }
 };
 
 // Initialize App
@@ -580,7 +715,9 @@ function generateSeedPhrase() {
             CTC: { balance: '10000.00', value: 24500 },
             BTC: { balance: '0.5', value: 22500 },
             ETH: { balance: '5.0', value: 16000 },
-            USDT: { balance: '1000.00', value: 1000 }
+            USDT: { balance: '1000.00', value: 1000 },
+            BNB: { balance: '20.0', value: 6400 },
+            SOL: { balance: '100.0', value: 10000 }
         },
         transactions: generateMockTransactions(),
         settings: {
@@ -732,12 +869,13 @@ function updateAssetList() {
         const price = AppState.marketData[symbol]?.price || getDefaultPrice(symbol);
         const value = parseFloat(data.balance) * price;
         const change = AppState.marketData[symbol]?.change24h || 0;
+        const coinInfo = COIN_LIST[symbol];
         
         return `
             <div class="asset-item" onclick="showAssetDetail('${symbol}')">
-                ${symbol === 'CTC' ? 
-                    '<img src="/logo.png" alt="CTC" class="asset-icon">' :
-                    `<div class="asset-icon-placeholder">${symbol}</div>`
+                ${coinInfo && coinInfo.logo ? 
+                    `<img src="${coinInfo.logo}" alt="${symbol}" class="asset-icon" style="background-color: ${coinInfo.color}20;">` :
+                    `<div class="asset-icon-placeholder" style="background-color: ${coinInfo?.color || '#E5E7EB'};">${symbol}</div>`
                 }
                 <div class="asset-info">
                     <div class="asset-name">${symbol}</div>
@@ -1064,25 +1202,50 @@ async function executeSwap() {
     }, 2000);
 }
 
-// Market Functions
+// Market Functions - Enhanced
 function updateMarkets() {
     const marketList = document.getElementById('market-list');
     if (!marketList) return;
     
-    const markets = Object.entries(AppState.marketData).map(([symbol, data], index) => {
+    // Create comprehensive market list with all coins
+    const allCoins = Object.keys(COIN_LIST);
+    
+    // Ensure we have market data for all coins
+    allCoins.forEach(symbol => {
+        if (!AppState.marketData[symbol]) {
+            AppState.marketData[symbol] = {
+                price: getDefaultPrice(symbol),
+                change24h: Math.random() * 20 - 10, // Random change for demo
+                marketCap: getDefaultPrice(symbol) * 1000000000,
+                volume24h: Math.random() * 1000000000
+            };
+        }
+    });
+    
+    // Sort by market cap
+    const sortedCoins = allCoins.sort((a, b) => {
+        const marketCapA = AppState.marketData[a]?.marketCap || 0;
+        const marketCapB = AppState.marketData[b]?.marketCap || 0;
+        return marketCapB - marketCapA;
+    });
+    
+    const markets = sortedCoins.map((symbol, index) => {
+        const data = AppState.marketData[symbol];
+        const coinInfo = COIN_LIST[symbol];
+        
         return `
             <div class="market-item" onclick="viewMarketDetails('${symbol}')">
                 <div class="market-rank">${index + 1}</div>
-                ${symbol === 'CTC' ? 
-                    '<img src="/logo.png" alt="CTC" class="asset-icon">' :
-                    `<div class="asset-icon-placeholder">${symbol}</div>`
+                ${coinInfo.logo ? 
+                    `<img src="${coinInfo.logo}" alt="${symbol}" class="asset-icon" style="background-color: ${coinInfo.color}20;">` :
+                    `<div class="asset-icon-placeholder" style="background-color: ${coinInfo.color};">${symbol}</div>`
                 }
                 <div class="market-info">
                     <div class="market-symbol">${symbol}</div>
-                    <div class="market-name">${getTokenName(symbol)}</div>
+                    <div class="market-name">${coinInfo.name}</div>
                 </div>
                 <div class="market-values">
-                    <div class="market-price">$${data.price.toFixed(2)}</div>
+                    <div class="market-price">$${formatPrice(data.price)}</div>
                     <div class="market-change ${data.change24h >= 0 ? 'positive' : 'negative'}">
                         ${data.change24h >= 0 ? '+' : ''}${data.change24h.toFixed(2)}%
                     </div>
@@ -1092,6 +1255,19 @@ function updateMarkets() {
     }).join('');
     
     marketList.innerHTML = markets;
+}
+
+// Price formatting helper
+function formatPrice(price) {
+    if (price >= 1000) {
+        return price.toFixed(0).toLocaleString();
+    } else if (price >= 1) {
+        return price.toFixed(2);
+    } else if (price >= 0.01) {
+        return price.toFixed(4);
+    } else {
+        return price.toFixed(6);
+    }
 }
 
 // Settings Functions
@@ -1232,25 +1408,31 @@ function formatTime(timestamp) {
 }
 
 function getTokenName(symbol) {
-    const names = {
-        CTC: 'Community Trust Coin',
-        BTC: 'Bitcoin',
-        ETH: 'Ethereum',
-        USDT: 'Tether',
-        BNB: 'BNB',
-        SOL: 'Solana'
-    };
-    return names[symbol] || symbol;
+    return COIN_LIST[symbol]?.name || symbol;
 }
 
 function getDefaultPrice(symbol) {
     const prices = {
         CTC: 2.45,
-        BTC: 45000,
-        ETH: 3200,
+        BTC: 67890,
+        ETH: 3845,
         USDT: 1.0,
-        BNB: 320,
-        SOL: 100
+        BNB: 612,
+        SOL: 178,
+        XRP: 0.52,
+        USDC: 1.0,
+        ADA: 0.58,
+        AVAX: 38.45,
+        DOGE: 0.16,
+        TRX: 0.11,
+        DOT: 7.85,
+        MATIC: 0.84,
+        SHIB: 0.000027,
+        LTC: 72.50,
+        UNI: 11.20,
+        LINK: 14.85,
+        ATOM: 9.65,
+        XLM: 0.12
     };
     return prices[symbol] || 1;
 }
@@ -1284,42 +1466,57 @@ function showToast(message, type = 'success') {
 // Market Data Updates
 async function loadMarketData() {
     try {
-        // Initialize with default data
-        AppState.marketData = {
+        // Initialize with realistic crypto prices
+        const defaultPrices = {
             CTC: { price: 2.45, change24h: 12.5 },
-            BTC: { price: 45000, change24h: -2.1 },
-            ETH: { price: 3200, change24h: 5.8 },
-            USDT: { price: 1.0, change24h: 0.1 }
+            BTC: { price: 67890, change24h: 2.3 },
+            ETH: { price: 3845, change24h: 3.7 },
+            USDT: { price: 1.0, change24h: 0.01 },
+            BNB: { price: 612, change24h: 1.8 },
+            SOL: { price: 178, change24h: 5.2 },
+            XRP: { price: 0.52, change24h: -1.4 },
+            USDC: { price: 1.0, change24h: 0.02 },
+            ADA: { price: 0.58, change24h: 4.1 },
+            AVAX: { price: 38.45, change24h: -2.3 },
+            DOGE: { price: 0.16, change24h: 8.7 },
+            TRX: { price: 0.11, change24h: 1.2 },
+            DOT: { price: 7.85, change24h: 3.9 },
+            MATIC: { price: 0.84, change24h: -0.8 },
+            SHIB: { price: 0.000027, change24h: 15.3 },
+            LTC: { price: 72.50, change24h: 1.5 },
+            UNI: { price: 11.20, change24h: 2.8 },
+            LINK: { price: 14.85, change24h: 4.5 },
+            ATOM: { price: 9.65, change24h: -1.9 },
+            XLM: { price: 0.12, change24h: 0.7 }
         };
         
+        // Set default data
+        AppState.marketData = defaultPrices;
+        
         // Try to fetch live data
+        const coinIds = Object.values(COIN_LIST)
+            .filter(coin => !coin.isLocal)
+            .map(coin => coin.id)
+            .join(',');
+        
         const response = await fetch(
-            `${COINGECKO_API.base}${COINGECKO_API.price}?ids=bitcoin,ethereum,tether&vs_currencies=usd&include_24hr_change=true`
+            `${COINGECKO_API.base}${COINGECKO_API.price}?ids=${coinIds}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`
         );
         
         if (response.ok) {
             const data = await response.json();
             
-            if (data.bitcoin) {
-                AppState.marketData.BTC = {
-                    price: data.bitcoin.usd,
-                    change24h: data.bitcoin.usd_24h_change
-                };
-            }
-            
-            if (data.ethereum) {
-                AppState.marketData.ETH = {
-                    price: data.ethereum.usd,
-                    change24h: data.ethereum.usd_24h_change
-                };
-            }
-            
-            if (data.tether) {
-                AppState.marketData.USDT = {
-                    price: data.tether.usd,
-                    change24h: data.tether.usd_24h_change
-                };
-            }
+            // Update market data with live prices
+            Object.entries(COIN_LIST).forEach(([symbol, coinInfo]) => {
+                if (data[coinInfo.id] && !coinInfo.isLocal) {
+                    AppState.marketData[symbol] = {
+                        price: data[coinInfo.id].usd || defaultPrices[symbol].price,
+                        change24h: data[coinInfo.id].usd_24h_change || defaultPrices[symbol].change24h,
+                        marketCap: data[coinInfo.id].usd_market_cap || defaultPrices[symbol].price * 1000000000,
+                        volume24h: data[coinInfo.id].usd_24h_vol || Math.random() * 1000000000
+                    };
+                }
+            });
         }
     } catch (error) {
         console.error('Failed to load market data:', error);
@@ -1461,4 +1658,4 @@ window.selectSwapToAsset = selectSwapToAsset;
 window.showStakeDialog = showStakeDialog;
 window.updateAmountConversion = updateAmountConversion;
 
-console.log('CTC Wallet - Tonkeeper-inspired Edition with Biometric Authentication initialized');
+console.log('CTC Wallet - Enhanced Markets Edition initialized');
